@@ -61,7 +61,7 @@ spec:
       # and Python's logging module would then fail to open it.
       initContainers:
         - name: seed-database
-          image: ghcr.io/acaacx/devsec-pipeline@sha256:688b25a43f8c63290ff26233607b3090b33666b2feb8485648ce4ea728a757ff
+          image: ghcr.io/acaacx/devsec-pipeline@sha256:6cccb0a57dd7fe5d2326b07f666d6af63d9f259ce39e4f8fa6c94634b7f0e35d
           imagePullPolicy: Always
           command:
             - sh
@@ -98,12 +98,12 @@ spec:
           #   cosign verify --certificate-identity-regexp \
           #     '^https://github.com/acaacx/devsec-pipeline/' \
           #     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-          #     ghcr.io/acaacx/devsec-pipeline@sha256:688b25a4...
+          #     ghcr.io/acaacx/devsec-pipeline@sha256:6cccb0a5...
           #
           # A deploy pipeline substitutes the digest of whichever build it is
           # promoting. The OPA policy in policy/ still rejects `latest` and empty
           # tags, for the case where someone replaces this with a tag.
-          image: ghcr.io/acaacx/devsec-pipeline@sha256:688b25a43f8c63290ff26233607b3090b33666b2feb8485648ce4ea728a757ff
+          image: ghcr.io/acaacx/devsec-pipeline@sha256:6cccb0a57dd7fe5d2326b07f666d6af63d9f259ce39e4f8fa6c94634b7f0e35d
           imagePullPolicy: Always
           ports:
             - name: http
