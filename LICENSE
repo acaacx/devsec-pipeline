@@ -3,13 +3,6 @@ MIT License
 Copyright (c) 2020 pygoat
 Copyright (c) 2026 acaacx
 
-The PyGoat application vendored in this repository originates from
-https://github.com/adeyosemanputra/pygoat and is used under the MIT licence
-reproduced below; the copyright above is theirs. The DevSecOps pipeline added
-around it -- .github/workflows/, .security/, policy/, deploy/, docs/, diagrams/,
-the Makefile and the repository configuration -- is licensed under the same
-terms.
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

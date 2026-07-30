@@ -189,8 +189,9 @@ vendors PyGoat as a test fixture. The application source under `pygoat/`,
 `Procfile`, `runtime.txt`, `requirements.txt` and `docker-compose.yml` come from
 [adeyosemanputra/pygoat](https://github.com/adeyosemanputra/pygoat) (MIT), taken
 via [nanuchi/devsecops-crash-course-pygoat](https://github.com/nanuchi/devsecops-crash-course-pygoat).
-Upstream's MIT licence and copyright are reproduced in [LICENSE](LICENSE) and
-cover that code; the same licence covers the pipeline added here.
+Upstream's MIT licence and copyright are reproduced in [LICENSE](LICENSE), which
+covers that code and the pipeline added around it alike. [NOTICE](NOTICE) states
+which paths came from where.
 
 The upstream `.github/workflows/main.yml` was **replaced**, not extended. Its
 contributor list is preserved [below](#contributors-).

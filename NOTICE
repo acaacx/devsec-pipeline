@@ -1,0 +1,42 @@
+This repository contains two bodies of work under one MIT licence (see LICENSE).
+
+1. The application: PyGoat
+--------------------------
+
+Copyright (c) 2020 pygoat
+https://github.com/adeyosemanputra/pygoat
+
+A deliberately vulnerable Django application, vendored here unmodified as a test
+fixture for the pipeline. Taken by way of
+https://github.com/nanuchi/devsecops-crash-course-pygoat.
+
+These paths are upstream's:
+
+    pygoat/  chatbot/  Solutions/  introduction/
+    manage.py  setup.py  PyGoatBot.py  installer.sh  uninstaller.py
+    uninstaller.sh  gh-md-toc  Procfile  runtime.txt  requirements.txt
+    docker-compose.yml  temp.py  test.log  .all-contributorsrc
+    .vscode/settings.json  docs/dev_guide.md
+
+Upstream's README is preserved in full at the end of this repository's README,
+and its contributor list with it. Upstream's own CI workflow
+(.github/workflows/main.yml) was replaced, not extended.
+
+Because this application exists to be exploitable, it must not be deployed
+anywhere reachable. deploy/ exists to be scanned and policy-tested.
+
+2. The pipeline
+---------------
+
+Copyright (c) 2026 acaacx
+
+Everything else, notably:
+
+    .github/workflows/  .security/  policy/  deploy/  docs/  diagrams/
+    Makefile  Dockerfile  .gitleaks.toml  .yamllint.yml  .dockerignore
+    .github/dependabot.yml  README.md (above the upstream section)
+
+This repository is not a GitHub fork. It was relocated from
+github.com/acaacx/devsecops-demo, which was one, with that repository's history
+squashed into a single initial commit — which is why provenance is recorded here
+rather than being implied by a fork relationship.
