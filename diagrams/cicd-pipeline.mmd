@@ -1,0 +1,34 @@
+graph LR
+  DEV["Developer"] -->|git push| REPO["GitHub repo<br/>devsec-pipeline"]
+  REPO -->|"on: [push]"| CI{{"GitHub Actions<br/>workflow: CI"}}
+
+  CI --> SAST
+  CI --> IMG
+
+  subgraph SAST["job: sast_scan — ubuntu-latest"]
+    S1["actions/checkout@v2"] --> S2["setup-python@v2<br/>3.8"]
+    S2 --> S3["pip install bandit"]
+    S3 --> S4["bandit -ll -ii -r .<br/>-f json"]
+  end
+
+  subgraph IMG["job: image_scan — ubuntu-latest"]
+    I1["actions/checkout@v2"] --> I2["setup-docker<br/>20.10.7"]
+    I2 --> I3["docker build -f Dockerfile<br/>-t myapp:latest ."]
+    I3 --> I4["docker scout-action v1.0.9<br/>quickview + cves<br/>severity: critical,high<br/>secrets: REPO_USER / REPO_PWD"]
+  end
+
+  S4 -->|"bandit-report.json"| A1[("artifact<br/>bandit-findings")]
+  I4 -->|"scout-report.sarif"| A2[("artifact<br/>docker-scout-findings")]
+
+  DF["Dockerfile<br/>python:3.11.0b1-buster<br/>pip -r requirements.txt<br/>manage.py migrate<br/>gunicorn :8000 x6"] -.->|build context| I3
+
+  subgraph LOCAL["docker-compose — local runtime only, not in CI"]
+    DB[("db<br/>postgres")] --> MIG["migration<br/>manage.py migrate"]
+    MIG --> WEB["web<br/>gunicorn 0.0.0.0:8000"]
+    DB --> WEB
+  end
+
+  DF -.->|"image: pygoat/pygoat"| LOCAL
+
+  A1 --> GATE["Review findings<br/>(no fail-gate: if always)"]
+  A2 --> GATE

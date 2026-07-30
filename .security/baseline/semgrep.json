@@ -1,0 +1,257 @@
+{
+  "scanner": "semgrep",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 31,
+  "findings": [
+    {
+      "key": "42b7470b17607e5bd572",
+      "rule": "python.django.security.injection.request-data-write.request-data-write",
+      "severity": "MEDIUM",
+      "path": "introduction/apis.py",
+      "title": "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious actor is able to control data into sensitive files. For example, a malicious actor could force rolling of critical log files, or cause a denial-of-service by using up available disk space. Instead, e",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.request-data-write.request-data-write). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "859a1f6dea7d4210fe44",
+      "rule": "python.django.security.injection.request-data-write.request-data-write",
+      "severity": "MEDIUM",
+      "path": "introduction/apis.py",
+      "title": "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious actor is able to control data into sensitive files. For example, a malicious actor could force rolling of critical log files, or cause a denial-of-service by using up available disk space. Instead, e",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.request-data-write.request-data-write). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "916def37ef7c72782938",
+      "rule": "python.django.security.injection.request-data-write.request-data-write",
+      "severity": "MEDIUM",
+      "path": "introduction/apis.py",
+      "title": "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious actor is able to control data into sensitive files. For example, a malicious actor could force rolling of critical log files, or cause a denial-of-service by using up available disk space. Instead, e",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.request-data-write.request-data-write). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "3a3f8eff091e4af25eda",
+      "rule": "python.django.security.injection.code.user-eval.user-eval",
+      "severity": "MEDIUM",
+      "path": "introduction/mitre.py",
+      "title": "Found user data in a call to 'eval'. This is extremely dangerous because it can enable an attacker to execute arbitrary remote code on the system. Instead, refactor your code to not use 'eval' and instead use a safe library for the specific functionality you need.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.code.user-eval.user-eval). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "fe8a93712539665fce3b",
+      "rule": "python.jwt.security.jwt-hardcode.jwt-python-hardcoded-secret",
+      "severity": "HIGH",
+      "path": "introduction/mitre.py",
+      "title": "Hardcoded JWT secret or private key is used. This is a Insufficiently Protected Credentials weakness: https://cwe.mitre.org/data/definitions/522.html Consider using an appropriate security mechanism to protect the credentials (e.g. keeping secrets in environment variables)",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.jwt.security.jwt-hardcode.jwt-python-hardcoded-secret). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "e33506299766de9cdddc",
+      "rule": "python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+      "severity": "MEDIUM",
+      "path": "introduction/mitre.py",
+      "title": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.audit.md5-used-as-password.md5-used-as-password). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "d64f358988ce9b44f12f",
+      "rule": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+      "severity": "HIGH",
+      "path": "introduction/mitre.py",
+      "title": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.audit.subprocess-shell-true.subprocess-shell-true). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "5f95d2eea7d5136ad1b3",
+      "rule": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+      "severity": "MEDIUM",
+      "path": "introduction/mitre.py",
+      "title": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "0cae7ea7297b3dffd6bb",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/A9/a9_lab.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "5f70df77e573da6a6ed4",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/A9/a9_lab2.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "c9f73baea3ab5803fc58",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/BrokenAccess/ba_lab.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "b238467786a4fa010bea",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/BrokenAuth/otp.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "f828f87493ff9a449b58",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/CMD/cmd_lab.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "6155d6b2a39b00b45db5",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/CMD/cmd_lab2.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "4de740c2a57b7078d724",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/ssrf/ssrf_discussion.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "5c41a39f4a6494f1caa5",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/ssrf/ssrf_discussion.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "7851d9e9afd8391c214a",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/ssrf/ssrf_discussion.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "a132b6de6c4393ba754b",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab/ssrf/ssrf_discussion.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "006c5def4efd91859525",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab_2021/A1_BrokenAccessControl/broken_access_lab_1.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "a5b56dd00bfcd4e803c0",
+      "rule": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+      "severity": "MEDIUM",
+      "path": "introduction/templates/Lab_2021/A1_BrokenAccessControl/broken_access_lab_2.html",
+      "title": "Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.django-no-csrf-token.django-no-csrf-token). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "0314631a43d097d15d42",
+      "rule": "python.django.security.audit.avoid-insecure-deserialization.avoid-insecure-deserialization",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Avoid using insecure deserialization library, backed by `pickle`, `_pickle`, `cpickle`, `dill`, `shelve`, or `yaml`, which are known to lead to remote code execution vulnerabilities.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.audit.avoid-insecure-deserialization.avoid-insecure-deserialization). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "e09f66416b6c91500e9f",
+      "rule": "python.django.security.audit.avoid-insecure-deserialization.avoid-insecure-deserialization",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Avoid using insecure deserialization library, backed by `pickle`, `_pickle`, `cpickle`, `dill`, `shelve`, or `yaml`, which are known to lead to remote code execution vulnerabilities.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.audit.avoid-insecure-deserialization.avoid-insecure-deserialization). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "c5a10e9514c3d9a4609c",
+      "rule": "python.django.security.injection.code.user-eval.user-eval",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Found user data in a call to 'eval'. This is extremely dangerous because it can enable an attacker to execute arbitrary remote code on the system. Instead, refactor your code to not use 'eval' and instead use a safe library for the specific functionality you need.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.code.user-eval.user-eval). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "fece4a168cea4d0408d9",
+      "rule": "python.django.security.injection.command.subprocess-injection.subprocess-injection",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the serve",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.command.subprocess-injection.subprocess-injection). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "93a5dab5af469a0e8d48",
+      "rule": "python.django.security.injection.raw-html-format.raw-html-format",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is sa",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.raw-html-format.raw-html-format). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "98a061de810f181a0f1e",
+      "rule": "python.django.security.injection.request-data-write.request-data-write",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious actor is able to control data into sensitive files. For example, a malicious actor could force rolling of critical log files, or cause a denial-of-service by using up available disk space. Instead, e",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.request-data-write.request-data-write). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "ccd9145e18f18685d914",
+      "rule": "python.django.security.injection.ssrf.ssrf-injection-requests.ssrf-injection-requests",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Data from request object is passed to a new server-side request. This could lead to a server-side request forgery (SSRF). To mitigate, ensure that schemes and hosts are validated against an allowlist, do not forward the response to the user, and ensure proper authentication and transport-layer secur",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.django.security.injection.ssrf.ssrf-injection-requests.ssrf-injection-requests). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "a620260929ebe8de77e6",
+      "rule": "python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.audit.md5-used-as-password.md5-used-as-password). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "0f756cb8caa53a96ea73",
+      "rule": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Found 'subprocess' function 'Popen' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.audit.subprocess-shell-true.subprocess-shell-true). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "587a300e169c0058b843",
+      "rule": "python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Detected subprocess function 'cmd_lab' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "84ea62713db4634161ab",
+      "rule": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.",
+      "justification": "Intentional vulnerability in PyGoat lab code (python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    }
+  ]
+}

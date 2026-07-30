@@ -1,0 +1,17 @@
+{
+  "scanner": "trivy-config",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 1,
+  "findings": [
+    {
+      "key": "c0d32cacd0d325144f32",
+      "rule": "AWS-0033",
+      "severity": "LOW",
+      "path": "terraform/main.tf",
+      "title": "ECR Repository should use customer managed keys to allow more control",
+      "justification": "EXCEPTION (POLICY.md 3(b)), expires 2026-10-31. Finding: the ECR repository encrypts with the AWS-managed KMS key rather than a customer-managed key. Why not fixed now: a customer-managed key needs a key policy naming the account principal, which needs an aws_caller_identity data source, which needs real AWS credentials. This module is deliberately buildable with none - credential-free `terraform validate` and `plan` are what let CI scan it at all - so adding a CMK would trade the entire IaC scanning stage for one severity-LOW improvement. The trade-off is recorded in deploy/terraform/main.tf beside the resource. Compensating controls: encryption at rest is on and uses KMS rather than the weaker AES256 default; the repository is private with access governed by IAM; tags are immutable and scan-on-push is enabled. To close: if this module is ever pointed at a real account, add a CMK with an explicit key policy and delete this entry."
+    }
+  ]
+}

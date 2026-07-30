@@ -1,0 +1,177 @@
+---
+# A local DefectDojo for triaging what the pipeline finds.
+#
+# Not part of CI. The gate is what decides whether a build passes, and it needs
+# nothing but Python and .security/baseline/. This stack is the other half of
+# the workflow: somewhere to sit with 2900 findings, group them, and decide which
+# ones deserve a baseline entry. CI can also push to a *hosted* DefectDojo - see
+# the defectdojo-import job in .github/workflows/ci.yml - but it never brings
+# this up.
+#
+# Structure mirrors the upstream DefectDojo compose file (nginx in front of
+# uwsgi, celery beat and worker behind valkey, postgres for state, and a
+# run-once initializer that migrates the database and creates the admin user),
+# with three deliberate differences:
+#
+#   1. No `build:` sections. Upstream builds from its own Dockerfiles; here the
+#      published images are used and digest-pinned, like every other container
+#      this repository runs. They are not in `make check-pins`, which covers the
+#      eleven scanner images that must match ci.yml - DefectDojo is a local
+#      triage aid, not a step in the pipeline, so it has no entry there to drift
+#      against.
+#   2. No hardcoded keys. Upstream ships a working DD_SECRET_KEY and
+#      DD_CREDENTIAL_AES_256_KEY in the file so that `docker compose up` just
+#      works; those values are public, and committing them here would put a
+#      known encryption key in the repository - which is the finding gitleaks
+#      exists to catch. Every secret is required from the environment instead,
+#      generated per-machine into reports/.defectdojo.env by
+#      `make defectdojo-up`.
+#   3. Published on 127.0.0.1 only. The admin credentials are in a file on this
+#      machine, so the port should not be either.
+#
+# Required environment (all set by `make defectdojo-up`):
+#   DD_SECRET_KEY             Django secret key
+#   DD_CREDENTIAL_AES_256_KEY exactly 32 characters
+#   DD_DATABASE_PASSWORD      URL-safe, it goes into DD_DATABASE_URL
+#   DD_ADMIN_PASSWORD         admin login, used to mint the API token
+#
+# Run `make defectdojo-up` rather than invoking compose by hand.
+
+name: pygoat-defectdojo
+
+x-dd-images:
+  # Both are OCI image indexes covering linux/amd64 and linux/arm64, resolved
+  # through the registry API rather than `docker buildx imagetools` - see the
+  # multi-arch note in the Makefile.
+  django: &django_image "defectdojo/defectdojo-django@sha256:83061c691d14fd12cd8b0cbc9742b2c17e60fbd6905ba089f5cecfb366958524"  # 3.1.302
+  nginx: &nginx_image "defectdojo/defectdojo-nginx@sha256:b47609419f4ccb4dececd296a56b762769fc06863e592831b560f8dfb0dc392a"  # 3.1.302
+
+# Anchored so the four Django services cannot drift apart: they must agree on
+# the database, the broker and the keys or celery silently processes nothing.
+x-dd-env: &dd_env
+  DD_DATABASE_URL: "postgresql://defectdojo:${DD_DATABASE_PASSWORD:?set by make defectdojo-up}@postgres:5432/defectdojo"
+  DD_CELERY_BROKER_URL: "redis://valkey:6379/0"
+  DD_SECRET_KEY: "${DD_SECRET_KEY:?set by make defectdojo-up}"
+  DD_CREDENTIAL_AES_256_KEY: "${DD_CREDENTIAL_AES_256_KEY:?set by make defectdojo-up}"
+  DD_DATABASE_READINESS_TIMEOUT: "30"
+
+networks:
+  defectdojo:
+    name: pygoat-defectdojo
+
+services:
+  # Migrates the schema and creates the admin user, then exits. Everything else
+  # waits for it to complete successfully, so a failed migration surfaces as a
+  # failed dependency instead of four services crash-looping.
+  initializer:
+    image: *django_image
+    depends_on:
+      postgres:
+        condition: service_started
+    entrypoint: ["/wait-for-it.sh", "postgres:5432", "--", "/entrypoint-initializer.sh"]
+    environment:
+      <<: *dd_env
+      DD_INITIALIZE: "true"
+      DD_ADMIN_USER: "admin"
+      DD_ADMIN_MAIL: "admin@defectdojo.local"
+      DD_ADMIN_FIRST_NAME: "Admin"
+      DD_ADMIN_LAST_NAME: "User"
+      # Set explicitly rather than left to the initializer's random default,
+      # which is only ever printed to the log - `make defectdojo-token` needs to
+      # be able to authenticate later.
+      DD_ADMIN_PASSWORD: "${DD_ADMIN_PASSWORD:?set by make defectdojo-up}"
+    networks: [defectdojo]
+    restart: "no"
+
+  uwsgi:
+    image: *django_image
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_started
+      valkey:
+        condition: service_started
+    entrypoint: ["/wait-for-it.sh", "postgres:5432", "-t", "30", "--", "/entrypoint-uwsgi.sh"]
+    environment:
+      <<: *dd_env
+      DD_DEBUG: "False"
+      # Reached only through nginx on the loopback interface. Restricting this
+      # further would mean pinning the Compose-assigned container hostname.
+      DD_ALLOWED_HOSTS: "*"
+    volumes:
+      - defectdojo_media:/app/media
+    networks: [defectdojo]
+
+  # The import API hands large scans to celery, so the worker is not optional:
+  # without it, POSTs to /api/v2/import-scan/ are accepted and never processed.
+  celeryworker:
+    image: *django_image
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_started
+      valkey:
+        condition: service_started
+    entrypoint: ["/wait-for-it.sh", "postgres:5432", "-t", "30", "--", "/entrypoint-celery-worker.sh"]
+    environment: *dd_env
+    volumes:
+      - defectdojo_media:/app/media
+    networks: [defectdojo]
+
+  celerybeat:
+    image: *django_image
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_started
+      valkey:
+        condition: service_started
+    entrypoint: ["/wait-for-it.sh", "postgres:5432", "-t", "30", "--", "/entrypoint-celery-beat.sh"]
+    environment: *dd_env
+    networks: [defectdojo]
+
+  nginx:
+    image: *nginx_image
+    depends_on:
+      uwsgi:
+        condition: service_started
+    environment:
+      NGINX_METRICS_ENABLED: "false"
+      DD_UWSGI_HOST: "uwsgi"
+      DD_UWSGI_PORT: "3031"
+    volumes:
+      - defectdojo_media:/usr/share/nginx/html/media
+    ports:
+      # Loopback only: this instance holds the admin password and an API token
+      # that can write findings.
+      - "127.0.0.1:${DD_PORT:-8080}:8080"
+    networks: [defectdojo]
+
+  postgres:
+    image: postgres:18.4-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: "defectdojo"
+      POSTGRES_USER: "defectdojo"
+      POSTGRES_PASSWORD: "${DD_DATABASE_PASSWORD:?set by make defectdojo-up}"
+    volumes:
+      - defectdojo_postgres:/var/lib/postgresql/data
+    networks: [defectdojo]
+
+  valkey:
+    image: valkey/valkey:9.1.0-alpine@sha256:a35428eba9043cc0b79dbe54100f0c92784f2de00ad09b01182bfb1c5c83d1bd
+    volumes:
+      - defectdojo_valkey:/data
+    networks: [defectdojo]
+
+volumes:
+  # Named, and deliberately not removed by `make defectdojo-down`: triage
+  # decisions made in the UI are the only thing here worth keeping, and
+  # re-migrating a fresh database takes minutes. `make defectdojo-destroy`
+  # removes them explicitly.
+  defectdojo_postgres: {}
+  defectdojo_media: {}
+  defectdojo_valkey: {}

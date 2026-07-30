@@ -1,0 +1,34 @@
+---
+# Relaxed where GitHub Actions and the upstream PyGoat compose file need it,
+# strict everywhere else. Upstream application files are not edited to satisfy
+# a linter.
+extends: default
+
+rules:
+  line-length:
+    max: 160
+    allow-non-breakable-words: true
+  # `on:` in a workflow is a YAML 1.1 truthy value; it is also mandatory.
+  truthy:
+    check-keys: false
+  # Pipeline YAML opens with `---`; upstream docker-compose.yml does not.
+  # Neither style is worth enforcing across a mixed tree.
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+  braces:
+    max-spaces-inside: 1
+
+ignore: |
+  .git/
+  .gstack/
+  node_modules/
+  reports/
+  venv/
+  env/
+  # Scanner caches, not our YAML. `trivy config` downloads its Rego checks
+  # bundle - several hundred vendored YAML files - into .trivycache, and linting
+  # a third party's cache contents says nothing about this repository.
+  .trivycache/
+  .cache/
+  deploy/terraform/.terraform/

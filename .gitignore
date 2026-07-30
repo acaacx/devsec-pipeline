@@ -1,0 +1,49 @@
+.env/
+*.pyc
+env
+pygoat/db.sqlite3
+venv
+*.sqlite3
+*db.sqlite3*
+app.log
+bin
+.gstack/
+
+# --- security pipeline: generated reports, never committed ---
+# Baselines under .security/baseline/ ARE committed; raw scan output is not.
+reports/
+*-report.json
+*-report.sarif
+*.sarif
+sbom/
+trivy-*.json
+zap-*.html
+zap-*.json
+zap-*.xml
+.security/reports/
+
+# --- local scanner scratch ---
+.trivycache/
+.semgrep/
+.cache/
+
+# Per-machine agent tool permissions, not project configuration.
+.claude/settings.local.json
+
+# The committed baseline is NOT a generated report - the patterns above would
+# otherwise swallow .security/baseline/trivy-fs.json and ship an incomplete
+# baseline, which fails the gate on 80 already-accepted findings.
+!.security/baseline/
+!.security/baseline/*.json
+
+# --- Terraform ---
+# .terraform/ is a provider cache: hundreds of MB of downloaded binaries.
+# .terraform.lock.hcl is deliberately NOT ignored - it pins provider checksums
+# for every platform the pipeline runs on, which is the same supply-chain
+# guarantee as pinning an action to a commit SHA. Committing it is the point.
+deploy/terraform/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+tfplan
+*.tfplan

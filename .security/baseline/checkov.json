@@ -1,0 +1,8 @@
+{
+  "scanner": "checkov",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 0,
+  "findings": []
+}

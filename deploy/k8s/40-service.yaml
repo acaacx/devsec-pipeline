@@ -1,0 +1,22 @@
+---
+# ClusterIP, deliberately. This application must not be reachable from outside
+# the cluster: it is an intentionally exploitable target, and a LoadBalancer or
+# NodePort would publish it to the internet. Reaching it is an explicit act -
+# `kubectl port-forward svc/pygoat 8000:8000` - rather than a side effect of
+# applying a manifest.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pygoat
+  namespace: pygoat
+  labels:
+    app.kubernetes.io/name: pygoat
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pygoat
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP

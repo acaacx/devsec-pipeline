@@ -1,0 +1,137 @@
+{
+  "scanner": "zap",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 16,
+  "findings": [
+    {
+      "key": "f538454f65443d5e312d",
+      "rule": "10010",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Cookie No HttpOnly Flag",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "6b757116973fd3a60b43",
+      "rule": "10021",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "X-Content-Type-Options Header Missing",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "74893d8de53f094178eb",
+      "rule": "10031",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "User Controllable HTML Element Attribute (Potential XSS)",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "6d2843af67663317f2d3",
+      "rule": "10038-1",
+      "severity": "MEDIUM",
+      "path": "dast:pygoat",
+      "title": "Content Security Policy (CSP) Header Not Set",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "36338d79d9e9f03d9d01",
+      "rule": "10049-1",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "Non-Storable Content",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "3d772fc1c2e316f9b947",
+      "rule": "10049-3",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "Storable and Cacheable Content",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "e45cad8edf81de076c79",
+      "rule": "10063-1",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Permissions Policy Header Not Set",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "ac040faafe1a23ebc923",
+      "rule": "10098",
+      "severity": "MEDIUM",
+      "path": "dast:pygoat",
+      "title": "Cross-Domain Misconfiguration",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "2c5b0e170d3dc679a0e8",
+      "rule": "10109",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "Modern Web Application",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "4e46d94ea9b4475d9873",
+      "rule": "10111",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "Authentication Request Identified",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "bd91df386abdcde26068",
+      "rule": "10112",
+      "severity": "UNKNOWN",
+      "path": "dast:pygoat",
+      "title": "Session Management Response Identified",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "b69c2f0f04c586f2e19f",
+      "rule": "10202",
+      "severity": "MEDIUM",
+      "path": "dast:pygoat",
+      "title": "Absence of Anti-CSRF Tokens",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "014bad5c020a30720be4",
+      "rule": "2",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Private IP Disclosure",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "609f3431c85ddb494e76",
+      "rule": "90004-1",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "081a90c0fcc43db12f21",
+      "rule": "90004-2",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    },
+    {
+      "key": "6c39cfa002bdc5242074",
+      "rule": "90022",
+      "severity": "LOW",
+      "path": "dast:pygoat",
+      "title": "Application Error Disclosure",
+      "justification": "Runtime finding against the deliberately vulnerable PyGoat application, observed by the DAST stage over HTTP. The application's responses are the teaching material and this repository does not modify app code. Anything here that is genuinely a property of the *deployment* rather than of PyGoat - a missing response header the settings overlay could set, for instance - is a POLICY.md 3(b) finding in the pipeline's own configuration and should be fixed in deploy/overlay/ instead of accepted here."
+    }
+  ]
+}

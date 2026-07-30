@@ -1,0 +1,84 @@
+---
+# Default deny, both directions.
+#
+# Kubernetes pods accept and originate traffic freely unless a NetworkPolicy
+# selects them, so an empty-rule policy over an empty podSelector is what turns
+# the namespace from allow-by-default to deny-by-default. Everything the workload
+# is actually permitted to do is then granted explicitly in the policy below.
+#
+# Requires a CNI that enforces NetworkPolicy - Calico, Cilium, Antrea. Under a
+# plugin that ignores it (plain kindnet, for instance) this manifest applies
+# cleanly and does nothing, which is worth knowing before treating it as a
+# control rather than a document.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: pygoat
+  labels:
+    app.kubernetes.io/name: pygoat
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# The complete set of permitted flows.
+#
+# Egress is DNS and nothing else. This is the sharpest control in the manifest
+# set and it is aimed squarely at PyGoat's own labs: the SSRF exercises work by
+# making the server fetch a URL the attacker chooses, and the data-exfiltration
+# paths need somewhere to send data. With no egress rule for ports 80 or 443,
+# those requests fail at the network layer regardless of how thoroughly the
+# application is compromised.
+#
+# That is a deliberate trade-off, not an oversight: it does restrict what the SSRF
+# lessons can demonstrate. Anyone who wants the labs fully live should add a
+# scoped egress rule here and be able to say what they opened - which is the
+# point of writing it down instead of leaving the namespace open.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pygoat-allow
+  namespace: pygoat
+  labels:
+    app.kubernetes.io/name: pygoat
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: pygoat
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Same namespace only. Nothing in another namespace, and nothing from
+    # outside the cluster, can reach the application.
+    #
+    # Note that kubelet liveness/readiness probes originate from the node rather
+    # than from a pod, and most CNIs permit node-to-pod traffic outside policy
+    # evaluation. If a given CNI does enforce it, probes will need an ipBlock
+    # rule covering the node CIDR - the symptom is a pod that never becomes
+    # ready while `kubectl exec`-ing curl against it works fine.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: pygoat
+      ports:
+        - port: http
+          protocol: TCP
+  egress:
+    # DNS to kube-dns/CoreDNS. TCP as well as UDP: resolvers fall back to TCP for
+    # responses that do not fit in a UDP datagram, and omitting it produces
+    # intermittent resolution failures that are painful to diagnose.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

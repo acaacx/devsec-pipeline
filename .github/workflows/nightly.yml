@@ -1,0 +1,134 @@
+---
+# Scheduled deep pipeline.
+#
+# Anything too slow or too noisy for a per-PR run lives here: full git-history
+# secret scanning and an all-severity image scan (CI only gates critical/high).
+name: Nightly
+
+on:
+  schedule:
+    # 03:17 UTC daily - off the hour to avoid GitHub's cron stampede.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}"
+  cancel-in-progress: false
+
+env:
+  IMG_GITLEAKS: "zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"  # v8.30.1
+  IMG_TRIVY: "aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f"  # v0.72.0
+  IMAGE_NAME: "ghcr.io/${{ github.repository }}"
+  REPORT_DIR: reports
+
+jobs:
+  # A secret that was committed and later deleted is still leaked. The PR scan
+  # only sees the diff, so the full walk of every commit happens here.
+  full-history-secret-scan:
+    name: "Nightly - full-history secret scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        with:
+          fetch-depth: 0
+
+      - name: Create report directory
+        run: mkdir -p "${REPORT_DIR}"
+
+      - name: Run Gitleaks over every commit
+        run: |
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            git --config /repo/.gitleaks.toml --report-format sarif --report-path "${REPORT_DIR}/gitleaks.sarif" \
+            --redact --exit-code 0 .
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            git --config /repo/.gitleaks.toml --report-format json --report-path "${REPORT_DIR}/.gitleaks-unredacted.json" \
+            --exit-code 0 .
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}"
+
+      # Only fingerprints leave the runner - the unredacted report never does.
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-history.json"
+
+      - name: Evaluate against baseline
+        run: |
+          python3 .security/gate.py gate --reports "${REPORT_DIR}"
+
+      - name: Upload full-history secret findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: gitleaks-full-history
+          path: |
+            ${{ env.REPORT_DIR }}/gitleaks.sarif
+            ${{ env.REPORT_DIR }}/normalized-history.json
+          if-no-files-found: error
+          retention-days: 30
+
+  deep-image-scan:
+    name: "Nightly - deep image scan"
+    runs-on: ubuntu-latest
+    env:
+      HAS_DOCKERHUB: "${{ secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' }}"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}" .trivycache
+
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile \
+            -t "${IMAGE_NAME}:nightly-${GITHUB_SHA}" \
+            .
+
+      # No severity filter here, and unfixed vulnerabilities are included: the
+      # nightly run records the full distribution so baseline drift is visible.
+      - name: Trivy deep image scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}/.trivycache":/root/.cache/trivy \
+            -v "${PWD}/${REPORT_DIR}":/out \
+            "${IMG_TRIVY}" image \
+              --scanners vuln,secret --format json --output "/out/trivy-image-nightly.json" \
+              --exit-code 0 "${IMAGE_NAME}:nightly-${GITHUB_SHA}"
+
+      - name: Docker Scout deep scan
+        if: env.HAS_DOCKERHUB == 'true'
+        uses: docker/scout-action@2688993af7bafd6ba8c6a74ec652442be91dd82b  # v1.23.1
+        with:
+          dockerhub-user: "${{ secrets.DOCKERHUB_USER }}"
+          dockerhub-password: "${{ secrets.DOCKERHUB_TOKEN }}"
+          image: "${{ env.IMAGE_NAME }}:nightly-${{ github.sha }}"
+          command: quickview,cves
+          sarif-file: "${{ env.REPORT_DIR }}/scout-nightly.sarif"
+          exit-code: false
+
+      - name: Note skipped Scout scan
+        if: env.HAS_DOCKERHUB != 'true'
+        run: |
+          echo "::notice title=Docker Scout::skipped - DOCKERHUB_USER/DOCKERHUB_TOKEN not configured"
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}" .trivycache
+
+      - name: Upload nightly image findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: image-scan-nightly
+          path: "${{ env.REPORT_DIR }}/*nightly*"
+          if-no-files-found: warn
+          retention-days: 30

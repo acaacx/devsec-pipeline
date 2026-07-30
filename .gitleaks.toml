@@ -1,0 +1,32 @@
+# Gitleaks configuration.
+#
+# Extends the upstream default ruleset rather than replacing it - a hand-rolled
+# rule list is a silent downgrade every time upstream adds a detector.
+#
+# The allowlist below excludes only *generated* paths: scanner caches, reports,
+# and SBOMs. It deliberately excludes nothing under the application tree, because
+# PyGoat's committed fake credentials are the point of the secret-scanning demo
+# and are handled by fingerprint in .security/baseline/gitleaks.json instead.
+#
+# Without this, `gitleaks dir` walks a restored pip cache of wheels and takes
+# minutes; `gitleaks git` never saw the problem because caches are untracked.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated artefacts, never source"
+paths = [
+  # The baseline files are truncated sha256 fingerprints, which look exactly like
+  # generic API keys to an entropy-based detector - 53 self-inflicted findings
+  # on first run. They contain hashes only, never secret material, by
+  # construction: see .security/POLICY.md, "Secrets never reach the baseline in
+  # plaintext".
+  '''^\.security/baseline/''',
+  '''^\.cache/''',
+  '''^\.trivycache/''',
+  '''^reports/''',
+  '''^sbom/''',
+  '''^\.git/''',
+  '''\.pyc$''',
+]

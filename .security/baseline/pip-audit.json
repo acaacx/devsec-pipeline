@@ -1,0 +1,649 @@
+{
+  "scanner": "pip-audit",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 80,
+  "findings": [
+    {
+      "key": "4f268ce4b10d537b2a04",
+      "rule": "PYSEC-2023-135",
+      "severity": "UNKNOWN",
+      "path": "certifi@2022.12.7",
+      "title": "Certifi 2023.07.22 removes root certificates from \"e-Tugra\" from the root store. These are in the process of being removed from Mozilla's trust store. e-Tugra's root certificates are being removed pur",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "87e07420cb09f260759b",
+      "rule": "PYSEC-2024-230",
+      "severity": "UNKNOWN",
+      "path": "certifi@2022.12.7",
+      "title": "Certifi 2024.07.04 removes root certificates from \"GLOBALTRUST\" from the root store. These are in the process of being removed from Mozilla's trust store. GLOBALTRUST's root certificates are being rem",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "4533ebf883f13f6d8e42",
+      "rule": "GHSA-537c-gmf6-5ccf",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "pyca/cryptography's wheels include a statically linked copy of OpenSSL. The versions of OpenSSL included in wheels prior to cryptograph 48.01 are vulnerable to a security issue. More details about the",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "f5f64ea56c67ed5d6ab5",
+      "rule": "GHSA-5cpq-8wj7-hf2v",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "pyca/cryptography's wheels include a statically linked copy of OpenSSL. The versions of OpenSSL included in cryptography 0.5-40.0.2 are vulnerable to a security issue. More details about the vulnerabi",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "b1a3454da656d79d2a28",
+      "rule": "GHSA-h4gh-qq45-vh27",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "pyca/cryptography's wheels include a statically linked copy of OpenSSL. The versions of OpenSSL included in cryptography 37.0.0-43.0.0 are vulnerable to a security issue. More details about the vulner",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "c28156b2d391c35a3f02",
+      "rule": "GHSA-jm77-qphf-c4w8",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "pyca/cryptography's wheels include a statically linked copy of OpenSSL. The versions of OpenSSL included in cryptography 0.8-41.0.2 are vulnerable to several security issues. More details about the vu",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "42a82b88f7e761b7268f",
+      "rule": "GHSA-v8gr-m533-ghj9",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "pyca/cryptography's wheels include a statically linked copy of OpenSSL. The versions of OpenSSL included in cryptography 2.5-41.0.3 are vulnerable to several security issues. More details about the vu",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "b51a12b91209f45d575e",
+      "rule": "PYSEC-2023-254",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "### Summary Calling `load_pem_pkcs7_certificates` or `load_der_pkcs7_certificates` could lead to a NULL-pointer dereference and segfault. ### PoC Here is a Python code that triggers the issue: ```pyth",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "38c99b3a2193656dd2c6",
+      "rule": "PYSEC-2024-225",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "If `pkcs12.serialize_key_and_certificates` is called with both: 1. A certificate whose public key did not match the provided private key 2. An `encryption_algorithm` with `hmac_hash` set (via `Private",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "7e221c6da63c94f2f9c5",
+      "rule": "PYSEC-2026-1283",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "A flaw was found in the python-cryptography package. This issue may allow a remote attacker to decrypt captured messages in TLS servers that use RSA key exchanges, which may lead to exposure of confid",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "bb0fbd9faaa33c025360",
+      "rule": "PYSEC-2026-1285",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "Issue summary: Processing a maliciously formatted PKCS12 file may lead OpenSSL to crash leading to a potential Denial of Service attack Impact summary: Applications loading files in the PKCS12 format ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "19301829b1955ded42be",
+      "rule": "PYSEC-2026-2141",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "cryptography is a package designed to expose cryptographic primitives and recipes to Python developers. Prior to 46.0.5, the public_key_from_numbers (or EllipticCurvePublicNumbers.public_key()), Ellip",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "a4c6207972e26a2137e7",
+      "rule": "PYSEC-2026-35",
+      "severity": "UNKNOWN",
+      "path": "cryptography@39.0.1",
+      "title": "## Summary In versions of cryptography prior to 46.0.5, DNS name constraints were only validated against SANs within child certificates, and not the \"peer name\" presented during each validation. Conse",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "f40ff3555a05115fc671",
+      "rule": "PYSEC-2025-110",
+      "severity": "UNKNOWN",
+      "path": "django-allauth@0.52.0",
+      "title": "An issue was discovered in allauth-django before 65.13.0. IdP: marking a user as is_active=False after having handed tokens for that user while the account was still active had no effect. Fixed the ac",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "953926b53553d71b306b",
+      "rule": "PYSEC-2025-111",
+      "severity": "UNKNOWN",
+      "path": "django-allauth@0.52.0",
+      "title": "An issue was discovered in allauth-django before 65.13.0. Both Okta and NetIQ were using preferred_username as the identifier for third-party provider accounts. That value may be mutable and should th",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "854407342602a46205c4",
+      "rule": "PYSEC-2026-56",
+      "severity": "UNKNOWN",
+      "path": "django-allauth@0.52.0",
+      "title": "An open redirect vulnerability exists in django-allauth versions prior to 65.14.1 when SAML IdP initiated SSO is enabled (it is disabled by default), which may allow an attacker to redirect users to a",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "767a46637e5ec7a57fbb",
+      "rule": "PYSEC-2023-100",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "In Django 3.2 before 3.2.20, 4 before 4.1.10, and 4.2 before 4.2.3, EmailValidator and URLValidator are subject to a potential ReDoS (regular expression denial of service) attack via a very large numb",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "8fa5cee53a7b9610479d",
+      "rule": "PYSEC-2023-222",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in Django 3.2 before 3.2.23, 4.1 before 4.1.13, and 4.2 before 4.2.7. The NFKC normalization is slow on Windows. As a consequence, django.contrib.auth.forms.UsernameField is su",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "440c92dc05521e441a5d",
+      "rule": "PYSEC-2023-225",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "In Django 3.2 before 3.2.21, 4.1 before 4.1.11, and 4.2 before 4.2.5, django.utils.encoding.uri_to_iri() is subject to a potential DoS (denial of service) attack via certain inputs with a very large n",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "f50e7983d92c19616571",
+      "rule": "PYSEC-2023-226",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "In Django 3.2 before 3.2.22, 4.1 before 4.1.12, and 4.2 before 4.2.6, the django.utils.text.Truncator chars() and words() methods (when used with html=True) are subject to a potential DoS (denial of s",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "4c9ef94b8af5eb8ff06f",
+      "rule": "PYSEC-2023-61",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "In Django 3.2 before 3.2.19, 4.x before 4.1.9, and 4.2 before 4.2.1, it was possible to bypass validation when using one form field to upload multiple files. This multiple upload has never been suppor",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "d31772070b1d0dc58dba",
+      "rule": "PYSEC-2025-105",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in Django 4.2 before 4.2.24, 5.1 before 5.1.12, and 5.2 before 5.2.6. FilteredRelation is subject to SQL injection in column aliases, using a suitably crafted dictionary, with ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "83dc7e390734cfccfdad",
+      "rule": "PYSEC-2025-107",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in 5.1 before 5.1.14, 4.2 before 4.2.26, and 5.2 before 5.2.8. NFKC normalization in Python is slow on Windows. As a consequence, `django.http.HttpResponseRedirect`, `django.ht",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "f0bbe73a13ebb5631f48",
+      "rule": "PYSEC-2025-108",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in 5.1 before 5.1.14, 4.2 before 4.2.26, and 5.2 before 5.2.8. The methods `QuerySet.filter()`, `QuerySet.exclude()`, and `QuerySet.get()`, and the class `Q()`, are subject to ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "3f6f3e052c52442193a4",
+      "rule": "PYSEC-2025-47",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in Django 5.2 before 5.2.2, 5.1 before 5.1.10, and 4.2 before 4.2.22. Internal HTTP response logging does not escape request.path, which allows remote attackers to potentially ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "33c197a59c16fe411c98",
+      "rule": "PYSEC-2026-1297",
+      "severity": "UNKNOWN",
+      "path": "django@4.1.7",
+      "title": "An issue was discovered in Django v5.1.1, v5.0.9, and v4.2.16. The django.contrib.auth.forms.PasswordResetForm class, when used in a view implementing password reset flows, allows remote attackers to ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "47834c14cf4a0db4fb49",
+      "rule": "PYSEC-2024-60",
+      "severity": "UNKNOWN",
+      "path": "idna@3.4",
+      "title": "### Impact A specially crafted argument to the `idna.encode()` function could consume significant resources. This may lead to a denial-of-service. ### Patches The function has been refined to reject s",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "1103ccd3c54da7f44c90",
+      "rule": "PYSEC-2026-215",
+      "severity": "UNKNOWN",
+      "path": "idna@3.4",
+      "title": "This is the same issue as CVE-2024-3651, however the original remediation in 2024 was not a complete fix. Payloads such as `\"\\u0660\" * N` or `\"\\u30fb\" * N + \"\\u6f22\"` utilize the `valid_contexto` func",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "73c2d1d739c5a04fd295",
+      "rule": "PYSEC-2023-175",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow versions before v10.0.1 bundled libwebp binaries in wheels that are vulnerable to CVE-2023-5129 (previously CVE-2023-4863). Pillow v10.0.1 upgrades the bundled libwebp binary to v1.3.2.",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "62e2237444b2d5b3ec00",
+      "rule": "PYSEC-2023-227",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "An issue was discovered in Pillow before 10.0.0. It is a Denial of Service that uncontrollably allocates memory to process a given task, potentially causing a service to crash by having it run out of ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "4d678139a994a519a9cb",
+      "rule": "PYSEC-2026-165",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "If a font advances for each glyph by an exceeding large amount, when Pillow keeps track of the current position, it may lead to an integer overflow. This has been fixed.",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "64cd4e6944f7d741eaaf",
+      "rule": "PYSEC-2026-1793",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "In _imagingcms.c in Pillow before 10.3.0, a buffer overflow exists because strcpy is used instead of strncpy.",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "cbc0759dfec14b520ac6",
+      "rule": "PYSEC-2026-1794",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Heap buffer overflow in libwebp allow a remote attacker to perform an out of bounds memory write via a crafted HTML page.",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "e09fc6dca05e7647aada",
+      "rule": "PYSEC-2026-2253",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, PIL/PcfFontFile.py _load_bitmaps() read glyph dimensions from the PCF METRICS section and passed them directly to Image.frombytes() without calling",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "873ab2052b97c7287357",
+      "rule": "PYSEC-2026-2254",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, PIL/FontFile.py FontFile.compile() assembled per-glyph images into a combined bitmap with Image.new(\"1\", (xsize, ysize)) without calling Image._dec",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "05fe93da0c80a5632a63",
+      "rule": "PYSEC-2026-2255",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, PIL/BdfFontFile.py bdf_char() read the BBX width and height field from a BDF font file and passed attacker-controlled dimensions to Image.new() wit",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "3be07e3ef71c6aaf4368",
+      "rule": "PYSEC-2026-2256",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, PIL/GdImageFile.py GdImageFile._open() read image dimensions from the GD 2.x header and stored them in self._size without calling Image._decompress",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "af8d2bc7c1a3de5469aa",
+      "rule": "PYSEC-2026-2257",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, WindowsViewer.get_command() constructed a cmd.exe shell command by directly embedding a file path into an f-string without escaping and passed the ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "0b6afaeb3ae8463a918c",
+      "rule": "PYSEC-2026-2874",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "### Impact An attacker can supply a malicious PDF that causes the process to hang indefinitely, consuming 100% CPU and making the application unresponsive. ### Patches Patched version: 12.2.0. PdfPars",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "7566a06d7aa26872535e",
+      "rule": "PYSEC-2026-3451",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, Pillow public image coordinate APIs can trigger a native heap out-of-bounds write when given coordinates near the signed 32-bit integer limits in I",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "a97131488832ad595278",
+      "rule": "PYSEC-2026-3453",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, Pillow's ImageCms.ImageCmsTransform.apply(im, imOut) API can trigger controlled native heap corruption when the caller supplies an output image who",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "35c7fd55ac273fa6636c",
+      "rule": "PYSEC-2026-3454",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow is a Python imaging library. Prior to 12.3.0, Pillow's public rank-filter API can trigger a native heap out-of-bounds write when given a very large odd filter size because ImageFilter.RankFilte",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "69a67fcd84f8ba1b0306",
+      "rule": "PYSEC-2026-3493",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "## Summary When Pillow loads an uncompressed image whose tile uses the `raw` codec and a mode in `Image._MAPMODES`, and the image was opened **from a filename**, it memory-maps the file and builds the",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "b650f268f4a140071a6c",
+      "rule": "PYSEC-2026-3494",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "### Summary Pillow's TGA RLE encoder reads past its row buffer when saving a mode `\"1\"` image. Adjacent process heap bytes can be copied into the generated TGA file. The bug is reachable through the p",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "ba883f873477dfd0261a",
+      "rule": "PYSEC-2026-3495",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "### Summary `PdfParser.PdfStream.decode()` in Pillow's `PdfParser.py` calls `zlib.decompress()` with the `bufsize` parameter set to the value of the PDF stream's `Length` field, without any upper boun",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "dfb8c8a94f88a06c7ced",
+      "rule": "PYSEC-2026-3496",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "### Summary `src/libImaging/Jpeg2KDecode.c:853` accumulates `total_component_width` across every tile in a JPEG2000 image instead of recomputing it per tile. That accumulated value is then used in the",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "2fe47961fd70416b29f5",
+      "rule": "PYSEC-2026-457",
+      "severity": "UNKNOWN",
+      "path": "pillow@9.4.0",
+      "title": "Pillow through 10.1.0 allows PIL.ImageMath.eval Arbitrary Code Execution via the environment parameter, a different vulnerability than CVE-2022-22817 (which was about the expression parameter).",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "0eaf619574e9fa78e1e3",
+      "rule": "PYSEC-2025-183",
+      "severity": "UNKNOWN",
+      "path": "pyjwt@2.4.0",
+      "title": "pyjwt v2.10.1 was discovered to contain weak encryption. NOTE: this is disputed by the Supplier because the key length is chosen by the application that uses the library (admittedly, library users may",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "8ce2a7806d876e18779e",
+      "rule": "PYSEC-2026-120",
+      "severity": "UNKNOWN",
+      "path": "pyjwt@2.4.0",
+      "title": "## Summary PyJWT does not validate the `crit` (Critical) Header Parameter defined in RFC 7515 \u00a74.1.11. When a JWS token contains a `crit` array listing extensions that PyJWT does not understand, the l",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "bf9b1f32d6c89a90ed1e",
+      "rule": "PYSEC-2026-175",
+      "severity": "UNKNOWN",
+      "path": "pyjwt@2.4.0",
+      "title": "PyJWT is a JSON Web Token implementation in Python. Prior to 2.13.0, PyJWKClient passes its uri argument directly to urllib.request.urlopen() which uses Python stdlib's default OpenerDirector register",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "d11eebb4d17db0d62184",
+      "rule": "PYSEC-2026-177",
+      "severity": "UNKNOWN",
+      "path": "pyjwt@2.4.0",
+      "title": "PyJWT is a JSON Web Token implementation in Python. Prior to 2.13.0, PyJWKClient.get_signing_key() forces a fresh HTTP request to the JWKS endpoint for every JWT with an unknown kid value, with no rat",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "a41b125d1f6e98cb5f7a",
+      "rule": "PYSEC-2026-179",
+      "severity": "UNKNOWN",
+      "path": "pyjwt@2.4.0",
+      "title": "PyJWT is a JSON Web Token implementation in Python. Prior to 2.13.0, when the verifier is decoding JSON Web Tokens, while supporting both asymmetric and HMAC algorithms, the library does not validate ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "7dc69b1294eafcefc3a4",
+      "rule": "PYSEC-2020-176",
+      "severity": "UNKNOWN",
+      "path": "pyyaml@5.1",
+      "title": "PyYAML 5.1 through 5.1.2 has insufficient restrictions on the load and load_all functions because of a class deserialization issue, e.g., Popen is a class in the subprocess module. NOTE: this issue ex",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "24ab24dc9ff02997bde9",
+      "rule": "PYSEC-2020-96",
+      "severity": "UNKNOWN",
+      "path": "pyyaml@5.1",
+      "title": "A vulnerability was discovered in the PyYAML library in versions before 5.3.1, where it is susceptible to arbitrary code execution when it processes untrusted YAML files through the full_load method o",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "467a18a35d3232fbbf62",
+      "rule": "PYSEC-2021-142",
+      "severity": "UNKNOWN",
+      "path": "pyyaml@5.1",
+      "title": "A vulnerability was discovered in the PyYAML library in versions before 5.4, where it is susceptible to arbitrary code execution when it processes untrusted YAML files through the full_load method or ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "ca6d2eff88cd615e0669",
+      "rule": "PYSEC-2023-74",
+      "severity": "UNKNOWN",
+      "path": "requests@2.28.2",
+      "title": "### Impact Since Requests v2.3.0, Requests has been vulnerable to potentially leaking `Proxy-Authorization` headers to destination servers, specifically during redirects to an HTTPS origin. This is a ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "5e270c37d8f61d6a70e2",
+      "rule": "PYSEC-2026-1872",
+      "severity": "UNKNOWN",
+      "path": "requests@2.28.2",
+      "title": "### Impact Due to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs. ### Workarounds For older versions of Reque",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "a37a7ad9ad36556b07f2",
+      "rule": "PYSEC-2026-1873",
+      "severity": "UNKNOWN",
+      "path": "requests@2.28.2",
+      "title": "When using a `requests.Session`, if the first request to a given origin is made with `verify=False`, TLS certificate verification may remain disabled for all subsequent requests to that origin, even i",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "3a80fd024008348e5d3f",
+      "rule": "PYSEC-2026-2275",
+      "severity": "UNKNOWN",
+      "path": "requests@2.28.2",
+      "title": "Requests is a HTTP library. Prior to version 2.33.0, the `requests.utils.extract_zipped_paths()` utility function uses a predictable filename when extracting files from zip archives into the system te",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "2ecb1a1e18a7bfc96669",
+      "rule": "GHSA-27jp-wm6q-gp25",
+      "severity": "UNKNOWN",
+      "path": "sqlparse@0.3.1",
+      "title": "### Summary The below gist hangs while attempting to format a long list of tuples. This was found while [drafting a regression test for Dja ngo 5.2's composite primary key feature](https://code.django",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "ad39ee61b711bc781130",
+      "rule": "PYSEC-2023-87",
+      "severity": "UNKNOWN",
+      "path": "sqlparse@0.3.1",
+      "title": "sqlparse is a non-validating SQL parser module for Python. In affected versions the SQL parser contains a regular expression that is vulnerable to ReDoS (Regular Expression Denial of Service). This is",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "1a1040a092441e75abaf",
+      "rule": "PYSEC-2026-1940",
+      "severity": "UNKNOWN",
+      "path": "sqlparse@0.3.1",
+      "title": "### Summary Passing a heavily nested list to sqlparse.parse() leads to a Denial of Service due to RecursionError. ### Details + PoC Running the following code will raise Maximum recursion limit exceed",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "48f94366b7c900abf207",
+      "rule": "PYSEC-2023-192",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "urllib3 doesn't treat the `Cookie` HTTP header special or provide any helpers for managing cookies over HTTP, that is the responsibility of the user. However, it is possible for a user to specify a `C",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "45a8dc1bd90a6f8e8947",
+      "rule": "PYSEC-2023-212",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "urllib3 previously wouldn't remove the HTTP request body when an HTTP redirect response using status 303 \"See Other\" after the request had its method changed from one that could accept a request body ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "e4b63fdedfc6e00b60b4",
+      "rule": "PYSEC-2026-141",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "urllib3 is an HTTP client library for Python. From 1.23 to before 2.7.0, cross-origin redirects followed from the low-level API via ProxyManager.connection_from_url().urlopen(..., assert_same_host=Fal",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "61dfa637dc4267193cbf",
+      "rule": "PYSEC-2026-1994",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "### Impact urllib3's [streaming API](https://urllib3.readthedocs.io/en/2.5.0/advanced-usage.html#streaming-and-i-o) is designed for the efficient handling of large HTTP responses by reading the conten",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "ab93583dc36cd22d1966",
+      "rule": "PYSEC-2026-1995",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "When using urllib3's proxy support with `ProxyManager`, the `Proxy-Authorization` header is only sent to the configured proxy, as expected. However, when sending HTTP requests *without* using urllib3'",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "64f99d29b3b85e1d6d02",
+      "rule": "PYSEC-2026-1996",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "### Impact urllib3's [streaming API](https://urllib3.readthedocs.io/en/2.6.2/advanced-usage.html#streaming-and-i-o) is designed for the efficient handling of large HTTP responses by reading the conten",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "579c61d608427443e6f1",
+      "rule": "PYSEC-2026-1998",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "## Impact urllib3 supports chained HTTP encoding algorithms for response content according to RFC 9110 (e.g., `Content-Encoding: gzip, zstd`). However, the number of links in the decompression chain w",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "5ce9ab2257e75981e7eb",
+      "rule": "PYSEC-2026-1999",
+      "severity": "UNKNOWN",
+      "path": "urllib3@1.26.9",
+      "title": "urllib3 handles redirects and retries using the same mechanism, which is controlled by the `Retry` object. The most common way to disable redirects is at the request level, as follows: ```python resp ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "df6dd46e9b0186172767",
+      "rule": "PYSEC-2023-221",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Werkzeug multipart data parser needs to find a boundary that may be between consecutive chunks. That's why parsing is based on looking for newline characters. Unfortunately, code looking for partial b",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "0564e8d42a9b7b96ed76",
+      "rule": "PYSEC-2023-57",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Browsers may allow \"nameless\" cookies that look like `=value` instead of `key=value`. A vulnerable browser may allow a compromised application on an adjacent subdomain to exploit this to set a cookie ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "fdfb1f9a52433c7d5167",
+      "rule": "PYSEC-2023-58",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Werkzeug's multipart form data parser will parse an unlimited number of parts, including file parts. Parts can be a small amount of bytes, but each requires CPU time to parse and may use more memory a",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "2484683b3eb4ed0b4a92",
+      "rule": "PYSEC-2026-2043",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "The debugger in affected versions of Werkzeug can allow an attacker to execute code on a developer's machine under some circumstances. This requires the attacker to get the developer to interact with ",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "56f727853668fd02b515",
+      "rule": "PYSEC-2026-2044",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Werkzeug's `safe_join` function allows path segments with Windows device names that have file extensions or trailing spaces. On Windows, there are special device names such as `CON`, `AUX`, etc that a",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "800b5f338e186a4154e3",
+      "rule": "PYSEC-2026-2045",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "On Python < 3.11 on Windows, `os.path.isabs()` does not catch UNC paths like `//server/share`. Werkzeug's `safe_join()` relies on this check, and so can produce a path that is not safe, potentially al",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "8719e844e8b4b611c456",
+      "rule": "PYSEC-2026-2046",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Werkzeug's `safe_join` function allows path segments with Windows device names. On Windows, there are special device names such as `CON`, `AUX`, etc that are implicitly present and readable in every d",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "c12bd96386f073ac8a41",
+      "rule": "PYSEC-2026-2320",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Werkzeug is a comprehensive WSGI web application library. Versions 3.1.5 and below, the safe_join function allows Windows device names as filenames if preceded by other path segments. This was previou",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "26ac27e67ddda9366e7d",
+      "rule": "PYSEC-2026-3417",
+      "severity": "UNKNOWN",
+      "path": "werkzeug@2.1.2",
+      "title": "Applications using Werkzeug to parse `multipart/form-data` requests are vulnerable to resource exhaustion. A specially crafted form body can bypass the `Request.max_form_memory_size` setting. The `Req",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    },
+    {
+      "key": "7114e784d9771c11f6e5",
+      "rule": "PYSEC-2026-2074",
+      "severity": "UNKNOWN",
+      "path": "zipp@3.8.0",
+      "title": "A Denial of Service (DoS) vulnerability exists in the jaraco/zipp library, affecting all versions prior to 3.19.1. The vulnerability is triggered when processing a specially crafted zip file that lead",
+      "justification": "Vulnerable dependency pin inherited from upstream PyGoat. Upgrading breaks the lab scenarios that depend on the old behaviour. Tracked by Dependabot; accepted for the demo application only."
+    }
+  ]
+}

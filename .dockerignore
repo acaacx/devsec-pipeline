@@ -1,0 +1,55 @@
+# The Dockerfile ends with `COPY . /app/`, so anything not excluded here is baked
+# into a published image.
+#
+# This file exists because Trivy caught the pipeline poisoning its own artifact:
+# after a local `make scan`, the build copied reports/.gitleaks-unredacted.json -
+# a file of plaintext secrets - into the image, which CI then pushes to GHCR. The
+# scanner output became part of the shipped attack surface. It also inflated the
+# image and the SBOM with thousands of cache files.
+#
+# Rule of thumb: if it is generated, secret, or only useful to a developer, it has
+# no business in a runtime image.
+
+# --- Version control and CI ---
+.git
+.gitignore
+.github
+.gitleaks.toml
+.yamllint.yml
+
+# --- Generated scanner output: NEVER in an image ---
+reports/
+sbom/
+.cache/
+.trivycache/
+.semgrep/
+*.sarif
+*-report.json
+
+# --- Security tooling and policy (evaluated in CI, not needed at runtime) ---
+.security/
+policy/
+Makefile
+
+# --- Deployment manifests (applied to a cluster, not shipped inside the app) ---
+deploy/
+
+# --- Local developer noise ---
+.vscode/
+.claude/
+.gstack/
+diagrams/
+venv/
+env/
+.env
+*.pyc
+__pycache__/
+*.sqlite3
+*db.sqlite3*
+app.log
+test.log
+
+# --- Docs: keep the image lean; they are on GitHub ---
+docs/
+README.md
+*.md

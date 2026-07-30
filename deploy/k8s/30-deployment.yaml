@@ -1,0 +1,224 @@
+---
+# Hardened deployment of a deliberately vulnerable application.
+#
+# The point of this manifest is the distinction between application security and
+# platform security. Every PyGoat lab remains exploitable - that is the teaching
+# material and it is not being taken away. What this does is make a successful
+# exploit as boring as possible: no root, no writable code, no capabilities, no
+# privilege escalation, no Kubernetes API token, and a resource ceiling so a
+# runaway request cannot starve its neighbours.
+#
+# The securityContext here is not decorative. 00-namespace.yaml enforces the
+# `restricted` Pod Security Standard, so the API server rejects this pod outright
+# if any of it is removed.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pygoat
+  namespace: pygoat
+  labels:
+    app.kubernetes.io/name: pygoat
+    app.kubernetes.io/component: web
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pygoat
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pygoat
+        app.kubernetes.io/component: web
+    spec:
+      serviceAccountName: pygoat
+      # PyGoat has SSRF and file-read labs. A mounted API token would promote any
+      # of them into cluster access, so the token is not mounted at all.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        # fsGroup makes the emptyDir group-owned by 10001, which is what lets the
+        # unprivileged process create the sqlite journal beside the database.
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      # The image builds a migrated /app/db.sqlite3 at `docker build` time, but
+      # /app is read-only at runtime. Seed the writable volume from it once per
+      # pod. `cp -n` so a container *restart* inside a live pod does not discard
+      # data written since the pod started - the emptyDir outlives the container,
+      # not the pod.
+      #
+      # app.log is created here so the subPath mount below resolves to a file.
+      # A subPath that does not exist in the volume is created as a *directory*,
+      # and Python's logging module would then fail to open it.
+      initContainers:
+        - name: seed-database
+          image: ghcr.io/acaacx/devsec-pipeline@sha256:688b25a43f8c63290ff26233607b3090b33666b2feb8485648ce4ea728a757ff
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - "set -e; cp -n /app/db.sqlite3 /data/db.sqlite3; touch /data/app.log"
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: pygoat
+          # Digest, not a tag: a tag is mutable, so what a tag names can change
+          # under a running deployment. This digest is the image CI published,
+          # signed with Cosign keyless and attached an SBOM attestation to -
+          # verify it before rolling it out:
+          #
+          #   cosign verify --certificate-identity-regexp \
+          #     '^https://github.com/acaacx/devsec-pipeline/' \
+          #     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+          #     ghcr.io/acaacx/devsec-pipeline@sha256:688b25a4...
+          #
+          # A deploy pipeline substitutes the digest of whichever build it is
+          # promoting. The OPA policy in policy/ still rejects `latest` and empty
+          # tags, for the case where someone replaces this with a tag.
+          image: ghcr.io/acaacx/devsec-pipeline@sha256:688b25a43f8c63290ff26233607b3090b33666b2feb8485648ce4ea728a757ff
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            # POD_IP is declared first so the $(POD_IP) reference below resolves;
+            # Kubernetes only expands variables already defined earlier in the list.
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PYTHONPATH
+              value: /config
+            - name: DJANGO_SETTINGS_MODULE
+              value: pygoat_deploy_settings
+            - name: PYGOAT_DATA_DIR
+              value: /data
+            # Explicit allowlist rather than '*'. The pod IP is required because
+            # kubelet probes address the pod directly and upstream ALLOWED_HOSTS
+            # would answer them with 400 DisallowedHost.
+            - name: PYGOAT_ALLOWED_HOSTS
+              value: "pygoat,pygoat.pygoat,pygoat.pygoat.svc,pygoat.pygoat.svc.cluster.local,localhost,127.0.0.1,$(POD_IP)"
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            # Nothing in the image is written at runtime once the database lives
+            # on a volume, so the application's own code cannot be modified by an
+            # exploit that achieves file write.
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            # gunicorn runs 6 workers per the image CMD, so the memory request is
+            # sized for that rather than for a single process. Limits are present
+            # because their absence is what makes one compromised pod a
+            # cluster-wide availability problem; the OPA policy enforces this.
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          # / redirects (302), so probes use /login/, which returns 200 and
+          # exercises template rendering and a database read.
+          startupProbe:
+            httpGet:
+              path: /login/
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /login/
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /login/
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            # introduction/views.py calls logging.basicConfig(filename='app.log')
+            # at module import time, relative to the working directory, so the
+            # path is /app/app.log. It is on the import chain of pygoat/urls.py:
+            # with /app read-only every gunicorn worker dies with
+            # "OSError: [Errno 30] Read-only file system: '/app/app.log'" before
+            # serving a single request.
+            #
+            # A single-file subPath mount is used rather than making /app or a
+            # directory inside it writable. The application can append to its log
+            # and nothing else - it still cannot create files next to its own code.
+            - name: data
+              mountPath: /app/app.log
+              subPath: app.log
+            - name: settings
+              mountPath: /config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            # gunicorn 26 opens a control-server socket under $HOME/.gunicorn.
+            # /home/pygoat is on the read-only root filesystem, which produces a
+            # repeating "Control server error: [Errno 30] Read-only file system"
+            # in the arbiter. Non-fatal, but a permanent error in the log of a
+            # security demo is not acceptable noise.
+            - name: home
+              mountPath: /home/pygoat
+      volumes:
+        # Deliberately ephemeral. This is a lab target: state is disposable, and
+        # a PersistentVolumeClaim would keep an attacker's changes across pods.
+        - name: data
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: settings
+          configMap:
+            name: pygoat-settings
+            defaultMode: 0444
+        # gunicorn keeps its worker heartbeat files under /tmp, so a read-only
+        # root filesystem needs this or the workers are killed as unresponsive.
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: home
+          emptyDir:
+            medium: Memory
+            sizeLimit: 8Mi

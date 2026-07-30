@@ -1,0 +1,20 @@
+---
+# Dedicated namespace so the NetworkPolicy in 50-networkpolicy.yaml has a
+# meaningful boundary to draw: "same namespace" is the only trust relationship
+# this workload gets.
+#
+# Pod Security Admission is enforced at the namespace level rather than left to
+# the manifests to self-police. `restricted` is the strictest built-in profile;
+# it is what makes the securityContext in 30-deployment.yaml non-optional - a
+# pod that drops any of those settings is rejected by the API server instead of
+# quietly starting in a weaker configuration.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pygoat
+  labels:
+    app.kubernetes.io/name: pygoat
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

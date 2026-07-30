@@ -1,0 +1,146 @@
+---
+# Ephemeral deployment of PyGoat for the DAST stage.
+#
+# Standalone, not an override of the repository's docker-compose.yml. That file
+# is the upstream project's and has three defects this stage cannot tolerate:
+# `web` declares both `build:` and `image: pygoat/pygoat`, so it is ambiguous
+# which bytes run; `migration` invokes `python pygoat/manage.py`, a path that
+# does not exist (the same class of defect as the WORKDIR bug fixed in the
+# Dockerfile); and it bind-mounts `.:/app`, which masks the built image with the
+# working tree - the scanner would then be testing the checkout, not the
+# artefact the pipeline produced. `postgres` is also untagged, and unused, since
+# PyGoat's settings hardcode sqlite.
+#
+# Fixing the upstream compose is out of scope by this repository's convention
+# (don't modify app code), so DAST gets its own file and leaves that one alone.
+#
+# The runtime constraints below mirror deploy/k8s/30-deployment.yaml as closely
+# as Compose can express them, and the settings overlay is the same file the
+# ConfigMap is rendered from. DAST therefore exercises the configuration that
+# actually gets deployed, rather than a convenient variant of it.
+#
+# Required environment:
+#   DAST_IMAGE  image reference to scan (the SHA-tagged image, never `latest`)
+#   DAST_STATE  absolute path to a writable scratch directory on the host
+#
+# Both are set by `make dast`. Run it rather than invoking compose by hand.
+
+name: pygoat-dast
+
+networks:
+  dast:
+    # Fixed name so the ZAP container can join with `docker run --network`
+    # instead of guessing the Compose-generated one.
+    name: pygoat-dast
+
+services:
+  # Stands in for the seed-database initContainer in the Kubernetes manifest.
+  # The image builds a migrated /app/db.sqlite3 at build time, but /app is
+  # read-only at runtime, so the database is copied onto the writable volume
+  # once before the web container starts.
+  #
+  # app.log is created here for the same reason the manifest creates it: the
+  # bind mount below must resolve to a file, and Docker silently creates a
+  # *directory* for a bind source that does not exist, which Python's logging
+  # module then fails to open.
+  seed:
+    image: ${DAST_IMAGE:?set DAST_IMAGE - run `make dast`}
+    pull_policy: never
+    command:
+      - sh
+      - -c
+      - "set -e; cp -n /app/db.sqlite3 /data/db.sqlite3; touch /data/app.log"
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${DAST_STATE:?set DAST_STATE - run `make dast`}/data:/data
+    networks: [dast]
+
+  web:
+    image: ${DAST_IMAGE:?set DAST_IMAGE - run `make dast`}
+    # No `command:` override: the image's own CMD is what gets deployed, so it
+    # is what should be scanned. No `build:` either - the image must be the one
+    # Stage 3 built and scanned, not a rebuild that could differ.
+    #
+    # `never` for the same reason. The tag CI passes here also exists in GHCR,
+    # and a pull would quietly substitute whatever is published for the bytes
+    # this pipeline just built and scanned. Failing is the right outcome.
+    pull_policy: never
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PYTHONPATH: /config
+      DJANGO_SETTINGS_MODULE: pygoat_deploy_settings
+      PYGOAT_DATA_DIR: /data
+      # Explicit allowlist rather than '*'. `web` is how ZAP addresses the
+      # service; 127.0.0.1 is how the healthcheck below does.
+      PYGOAT_ALLOWED_HOSTS: "web,localhost,127.0.0.1"
+    ports:
+      # Bound to loopback deliberately. This is a deliberately vulnerable
+      # application; publishing it on 0.0.0.0 would expose it to the local
+      # network, and on a CI runner to anything sharing that host. DAST does not
+      # need the published port at all - it reaches the container over the
+      # `dast` network - so this exists only for local debugging.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ${DAST_STATE:?set DAST_STATE - run `make dast`}/data:/data
+      # Single-file mount, matching the subPath mount in the Kubernetes
+      # manifest: introduction/views.py calls logging.basicConfig(filename=
+      # 'app.log') at import time, relative to the working directory, so every
+      # gunicorn worker dies on a read-only /app before serving a request. The
+      # application can append to its log and create nothing else.
+      - ${DAST_STATE:?set DAST_STATE - run `make dast`}/data/app.log:/app/app.log
+      # The same overlay deploy/k8s/20-configmap-settings.yaml is rendered from.
+      - ../overlay:/config:ro
+      # Both of the following stand in for emptyDir volumes in the Kubernetes
+      # manifest, and both need the long syntax rather than the `tmpfs:` list,
+      # because they need an explicit mode. Docker mounts a tmpfs on a path
+      # other than /tmp as root-owned 0755, and Compose has no equivalent of
+      # fsGroup, so the container's UID 10001 cannot write to it. That is not
+      # hypothetical: with `- /home/pygoat:size=8m` the arbiter logs
+      # "Control server error: [Errno 13] Permission denied: '/home/pygoat/
+      # .gunicorn'" on every start.
+      #
+      # gunicorn keeps worker heartbeat files under /tmp; without a writable
+      # /tmp the arbiter kills its own workers as unresponsive.
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 67108864
+          mode: 01777
+      # gunicorn 26 opens a control-server socket under $HOME/.gunicorn.
+      - type: tmpfs
+        target: /home/pygoat
+        tmpfs:
+          size: 8388608
+          mode: 01777
+    # / redirects (302), so the check uses /login/, which returns 200 and
+    # exercises template rendering and a database read - the same path the
+    # Kubernetes probes use. curl is not in the image; python is.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          sys.exit(0 if urllib.request.urlopen(
+              "http://127.0.0.1:8000/login/", timeout=5).status == 200 else 1)
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+    # No resource limits here, unlike the Kubernetes manifest. The image runs
+    # six gunicorn workers, and a limit sized for a CI runner would OOM-kill the
+    # target mid-scan and turn a security stage into a flaky one. Limits are a
+    # scheduling concern that belongs where there is a scheduler.
+    networks: [dast]

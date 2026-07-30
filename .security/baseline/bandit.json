@@ -1,0 +1,97 @@
+{
+  "scanner": "bandit",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 11,
+  "findings": [
+    {
+      "key": "c8ac2061493900084850",
+      "rule": "B506",
+      "severity": "MEDIUM",
+      "path": "introduction/lab_code/test.py",
+      "title": "Use of unsafe yaml load. Allows instantiation of arbitrary objects. Consider yaml.safe_load().",
+      "justification": "Intentional vulnerability in PyGoat lab code (B506). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "4b0da0572cecc1a5d7fb",
+      "rule": "B307",
+      "severity": "MEDIUM",
+      "path": "introduction/mitre.py",
+      "title": "Use of possibly insecure function - consider using safer ast.literal_eval.",
+      "justification": "Intentional vulnerability in PyGoat lab code (B307). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "fbc0c7d10e42f2345f9b",
+      "rule": "B324",
+      "severity": "HIGH",
+      "path": "introduction/mitre.py",
+      "title": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "justification": "Intentional vulnerability in PyGoat lab code (B324). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "25b014a39de6f59e020e",
+      "rule": "B602",
+      "severity": "HIGH",
+      "path": "introduction/mitre.py",
+      "title": "subprocess call with shell=True identified, security issue.",
+      "justification": "Intentional vulnerability in PyGoat lab code (B602). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "1543bbfce360b420bdd7",
+      "rule": "B301",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+      "justification": "Intentional vulnerability in PyGoat lab code (B301). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "11c143d45c07092804ff",
+      "rule": "B307",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Use of possibly insecure function - consider using safer ast.literal_eval.",
+      "justification": "Intentional vulnerability in PyGoat lab code (B307). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "5d3f3cf4a8033f43a948",
+      "rule": "B317",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Using xml.sax.make_parser to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.sax.make_parser with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called",
+      "justification": "Intentional vulnerability in PyGoat lab code (B317). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "dd1fd82a89d4f908b0c3",
+      "rule": "B319",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Using xml.dom.pulldom.parseString to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.dom.pulldom.parseString with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called",
+      "justification": "Intentional vulnerability in PyGoat lab code (B319). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "1d34ca853270b206da04",
+      "rule": "B324",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "justification": "Intentional vulnerability in PyGoat lab code (B324). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "0b3ad3ee29c6d2a6edcd",
+      "rule": "B506",
+      "severity": "MEDIUM",
+      "path": "introduction/views.py",
+      "title": "Use of unsafe yaml load. Allows instantiation of arbitrary objects. Consider yaml.safe_load().",
+      "justification": "Intentional vulnerability in PyGoat lab code (B506). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    },
+    {
+      "key": "a1fcaa6818b755295da2",
+      "rule": "B602",
+      "severity": "HIGH",
+      "path": "introduction/views.py",
+      "title": "subprocess call with shell=True identified, security issue.",
+      "justification": "Intentional vulnerability in PyGoat lab code (B602). The application is a deliberately insecure teaching target; this finding is the lesson, not a defect."
+    }
+  ]
+}

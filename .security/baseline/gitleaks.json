@@ -1,0 +1,89 @@
+{
+  "scanner": "gitleaks",
+  "generated_on": "2026-07-30",
+  "generated_by": "make baseline-update (.security/gate.py baseline)",
+  "note": "Accepted findings for a deliberately vulnerable application. Keys are location-independent fingerprints; the gate fails on any finding whose key is absent here. Never add an entry you have not observed in a real scan - regenerate instead of hand-editing keys.",
+  "count": 10,
+  "findings": [
+    {
+      "key": "9a9542bdbb8d3ab7fe46",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/static/js/a7.js",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "3a650405b01db2e43a9e",
+      "rule": "jwt",
+      "severity": "CRITICAL",
+      "path": "introduction/static/js/a7.js",
+      "title": "Uncovered a JSON Web Token, which may lead to unauthorized access to web applications and sensitive user data.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "f316703472665b4b7367",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/static/js/a9.js",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "c772456f6cb1467fe974",
+      "rule": "jwt",
+      "severity": "CRITICAL",
+      "path": "introduction/static/js/a9.js",
+      "title": "Uncovered a JSON Web Token, which may lead to unauthorized access to web applications and sensitive user data.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "203365d671d65e795a4d",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "33d836249adb3e8ad0e6",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "3463264df6d22c42a6be",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "751843743a1f5a95e872",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "a41298c63ae5d636ef14",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    },
+    {
+      "key": "e0aaaa454fb8d3b53984",
+      "rule": "generic-api-key",
+      "severity": "CRITICAL",
+      "path": "introduction/views.py",
+      "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+      "justification": "Fake credential committed as part of a PyGoat lab exercise. Not a live secret; kept so the secret-scanning lesson still demonstrates a hit."
+    }
+  ]
+}

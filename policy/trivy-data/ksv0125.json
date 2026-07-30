@@ -1,0 +1,25 @@
+{
+  "$comment": [
+    "Data input for Trivy's KSV0125 check ('Restrict container images to trusted",
+    "registries'), loaded with `trivy config --config-data policy/trivy-data`.",
+    "",
+    "The check's built-in default trusts Azure ACR, AWS ECR and GCR only, so it",
+    "reports every ghcr.io image as coming from an untrusted registry. That is a",
+    "finding about the check's default configuration, not about this repository -",
+    "and .security/POLICY.md 3(b) says findings in the pipeline get fixed rather",
+    "than baselined, so the registry list is stated here instead.",
+    "",
+    "Note that supplying this key REPLACES the defaults rather than adding to",
+    "them (the check uses the override whenever it is non-empty), which is why the",
+    "ECR host for the region in deploy/terraform is listed explicitly.",
+    "",
+    "Anything not on this list fails the scan. That is the point: it is the",
+    "allowlist of registries this project is willing to run code from."
+  ],
+  "ksv0125": {
+    "trusted_registries": [
+      "ghcr.io",
+      "ecr.eu-west-2.amazonaws.com"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$comment": [
+    "Machine-readable form of .security/POLICY.md - this file is what the gate",
+    "actually reads (.security/gate.py). POLICY.md explains and justifies it.",
+    "Keep the two in sync; the prose is the contract with humans, this is the",
+    "contract with CI."
+  ],
+  "fail_on_severities": ["CRITICAL", "HIGH"],
+  "baseline_dir": ".security/baseline",
+  "scanner_overrides": {
+    "gitleaks": {
+      "fail_on_severities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+      "reason": "A newly committed secret is never acceptable, whatever the rule's confidence. Rotate the credential, then rewrite history if it reached a shared branch."
+    },
+    "pip-audit": {
+      "fail_on_severities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+      "reason": "pip-audit emits no severity field at all, so severity filtering would silently drop every finding. Any new advisory blocks and must be triaged by hand."
+    },
+    "trivy-fs": {
+      "fail_on_severities": ["CRITICAL", "HIGH"],
+      "reason": "Dependency and licence findings at MEDIUM and below are reported for visibility but do not block; the nightly run records the full distribution."
+    },
+    "checkov": {
+      "fail_on_severities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+      "reason": "Checkov community edition leaves severity null on every check, so severity filtering would silently drop every finding - the same problem as pip-audit. Checkov also only scans deploy/, which POLICY.md 3(b) treats as the security control rather than the vulnerable app, so a new finding there is a real finding and blocks."
+    },
+    "trivy-config": {
+      "fail_on_severities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+      "reason": "Same reasoning as checkov: the target is the pipeline's own infrastructure code, not the deliberately vulnerable application, so severity is the wrong filter for whether a new finding deserves attention."
+    },
+    "conftest": {
+      "fail_on_severities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+      "reason": "A conftest failure means deploy/k8s violates policy/kubernetes.rego - a policy this repository wrote about its own infrastructure. There is no severity to weigh and nothing to accept: the baseline for this scanner is expected to stay empty."
+    }
+  }
+}

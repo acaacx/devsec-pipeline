@@ -1,0 +1,19 @@
+# ZAP baseline tuning - .security/zap/rules.tsv
+#
+# Format is tab-separated: <plugin id> <WARN|IGNORE|FAIL> <optional comment>.
+# Anything not listed defaults to WARN.
+#
+# This file deliberately sets nothing to FAIL. ZAP does not decide whether the
+# build passes - .security/gate.py does, against .security/baseline/zap.json,
+# using the same novelty rule every other scanner in this pipeline gets. Two
+# tools each holding a veto over the build is how you end up with a threshold
+# nobody can explain, and it would put PyGoat's intentional vulnerabilities in a
+# different category from its intentional hardcoded secrets for no reason.
+#
+# IGNORE is reserved for alerts that are artefacts of the *test harness* rather
+# than statements about the application. Baselining an application finding is a
+# recorded, expiring decision in .security/baseline/; silencing one here is
+# invisible. Anything about PyGoat itself therefore belongs in the baseline, not
+# in this file.
+#
+# Plugin IDs: https://www.zaproxy.org/docs/alerts/

@@ -1,0 +1,1008 @@
+---
+# Pull-request and push pipeline.
+#
+# Structure: stage-named jobs wired with real `needs:` so a failing gate blocks
+# downstream work. Scanners never fail a job on *findings* - they fail only on
+# scanner *errors*. Findings are gated centrally against .security/baseline/ by
+# the security-gate job, so the deliberately vulnerable PyGoat app does not leave
+# this pipeline permanently red.
+#
+# Every action is pinned to a full commit SHA with the version in a trailing
+# comment - including actions/*, because our own Semgrep supply-chain rule
+# (github-actions-mutable-action-tag) flags mutable tags and baselining our own
+# finding would be dishonest.
+#
+# Scanners run as digest-pinned containers rather than third-party actions. One
+# code path serves CI and `make scan`, and the only third-party action left in
+# the pipeline is Docker Scout - see docs/THREAT-MODEL.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege at workflow level; widened per job only where needed.
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  # Superseded PR runs are pointless; superseded pushes to main are still
+  # audit-relevant, so only PRs get cancelled.
+  cancel-in-progress: "${{ github.event_name == 'pull_request' }}"
+
+env:
+  # Scanner images, digest-pinned. Tag in the comment is the human-readable
+  # version; the digest is what actually runs. All are multi-arch manifest
+  # lists, so the same digest works on an amd64 runner and an arm64 laptop.
+  IMG_PYTHON: "python@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93"        # python:3.11-slim
+  IMG_SEMGREP: "semgrep/semgrep@sha256:65dcd4408adda7c183a6b4550cb1e9b19f7f627a6fbb7e0559bd466bedc44d7b"  # v1.172.0
+  IMG_TRIVY: "aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f"      # v0.72.0
+  IMG_GITLEAKS: "zricethezav/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"  # v8.30.1
+  IMG_HADOLINT: "hadolint/hadolint@sha256:7aba693c1442eb31c0b015c129697cb3b6cb7da589d85c7562f9deb435a6657c"  # v2.14.0-alpine
+  IMG_SYFT: "anchore/syft@sha256:1288ea4c8b38767b4e620c1e312c8cb26b6e887a99b4f07ab6cd19fc6f225026"  # v1.50.0
+  IMG_COSIGN: "gcr.io/projectsigstore/cosign@sha256:d91bc4e7e95e8d2f549c747a72dc174f90579e410a1695f57f686674f84ce849"  # v3.1.2
+  IMG_CHECKOV: "bridgecrew/checkov@sha256:c64ffb6d6fc8087c896341a2c697770a04a1cf558db04fa7b8129d8ca6bce336"  # 3.3.8
+  IMG_CONFTEST: "openpolicyagent/conftest@sha256:5fd81e332d7e4bc01daf3ef35371800a9a9720a30c0c37a78de0c5fbe4b6d622"  # v0.68.2, OPA 1.15.2
+  IMG_TERRAFORM: "hashicorp/terraform@sha256:7ae513256f7ce67879e218ae8593d6fbe216ec9e123abe6c94e4e10704857963"  # 1.15.8
+  IMG_ZAP: "zaproxy/zap-stable@sha256:8d387b1a63e3425beef4846e39719f5af2a787753af2d8b6558c6257d7a577a2"  # v2.17.0
+  BANDIT_VERSION: "1.9.4"
+  PIP_AUDIT_VERSION: "2.10.1"
+  IMAGE_NAME: "ghcr.io/${{ github.repository }}"
+  REPORT_DIR: reports
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1 - Code: secrets, Python SAST, pattern SAST
+  # ---------------------------------------------------------------------------
+  code-scan:
+    name: "Stage 1 - Code"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        with:
+          # Gitleaks needs both sides of a PR to scan only the PR's commits.
+          fetch-depth: 0
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}" .cache/pip
+
+      - name: Restore pip cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: .cache/pip
+          key: "pip-${{ runner.os }}-bandit${{ env.BANDIT_VERSION }}-${{ hashFiles('requirements.txt') }}"
+          restore-keys: "pip-${{ runner.os }}-"
+
+      # --- Secrets ------------------------------------------------------------
+      # Diff-only on PRs (fast, and the only commits the author can still fix),
+      # working-tree on pushes. Full history runs nightly, where its cost is
+      # affordable - see .github/workflows/nightly.yml.
+      #
+      # Two outputs on purpose: a redacted SARIF that is safe to publish, and an
+      # unredacted JSON that never leaves the runner and is used only to compute
+      # irreversible fingerprints for the baseline.
+      - name: Run Gitleaks (PR diff)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: "${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA: "${{ github.event.pull_request.head.sha }}"
+        run: |
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            git --config /repo/.gitleaks.toml --log-opts="${BASE_SHA}..${HEAD_SHA}" \
+            --report-format sarif --report-path "${REPORT_DIR}/gitleaks.sarif" \
+            --redact --exit-code 0 .
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            git --config /repo/.gitleaks.toml --log-opts="${BASE_SHA}..${HEAD_SHA}" \
+            --report-format json --report-path "${REPORT_DIR}/.gitleaks-unredacted.json" \
+            --exit-code 0 .
+
+      - name: Run Gitleaks (working tree)
+        if: github.event_name != 'pull_request'
+        run: |
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            dir --config /repo/.gitleaks.toml --report-format sarif --report-path "${REPORT_DIR}/gitleaks.sarif" \
+            --redact --exit-code 0 .
+          docker run --rm -v "${PWD}":/repo -w /repo "${IMG_GITLEAKS}" \
+            dir --config /repo/.gitleaks.toml --report-format json --report-path "${REPORT_DIR}/.gitleaks-unredacted.json" \
+            --exit-code 0 .
+
+      # --- Python SAST --------------------------------------------------------
+      # Same flags as the original pipeline (-ll -ii), now emitting SARIF for
+      # code scanning alongside the JSON the gate consumes.
+      - name: Run Bandit
+        run: |
+          docker run --rm -v "${PWD}":/src -v "${PWD}/.cache/pip":/root/.cache/pip \
+            -w /src "${IMG_PYTHON}" sh -c '
+              set -e
+              pip install -q "bandit[sarif]=='"${BANDIT_VERSION}"'"
+              set +e
+              bandit -ll -ii -r . -f json  -o '"${REPORT_DIR}"'/bandit.json  -q
+              json_rc=$?
+              bandit -ll -ii -r . -f sarif -o '"${REPORT_DIR}"'/bandit.sarif -q
+              sarif_rc=$?
+              # 0 = clean, 1 = findings, >1 = scanner error.
+              [ "$json_rc" -gt 1 ] || [ "$sarif_rc" -gt 1 ] && exit 2
+              exit 0
+            '
+
+      # --- Pattern SAST -------------------------------------------------------
+      - name: Run Semgrep
+        run: |
+          docker run --rm -v "${PWD}":/src -w /src "${IMG_SEMGREP}" \
+            semgrep scan \
+              --config p/python --config p/django --config p/owasp-top-ten \
+              --sarif --output "${REPORT_DIR}/semgrep.sarif" \
+              --metrics off --exclude "${REPORT_DIR}"
+          # Semgrep exits 0 with findings when --error is not set, so a missing
+          # or empty SARIF is the only signal of a genuine scanner failure.
+          test -s "${REPORT_DIR}/semgrep.sarif" || {
+            echo "::error title=Semgrep::produced no SARIF - scanner error"; exit 2; }
+
+      # Scanner containers run as root; hand the workspace back to the runner
+      # user so caching and artifact upload can read it.
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}" .cache
+
+      # Raw reports become normalized findings here, in the job that produced
+      # them. Only the normalized file crosses the job boundary, so the
+      # unredacted gitleaks output is never uploaded anywhere.
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-code.json"
+
+      - name: Upload code-stage findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: findings-code
+          # Explicit paths - never the whole directory, which holds the
+          # unredacted gitleaks report.
+          path: |
+            ${{ env.REPORT_DIR }}/bandit.json
+            ${{ env.REPORT_DIR }}/bandit.sarif
+            ${{ env.REPORT_DIR }}/semgrep.sarif
+            ${{ env.REPORT_DIR }}/gitleaks.sarif
+            ${{ env.REPORT_DIR }}/normalized-code.json
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Stage 2 - Dependencies
+  # ---------------------------------------------------------------------------
+  dependency-scan:
+    name: "Stage 2 - Dependencies"
+    needs: [code-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}" .cache/pip .trivycache
+
+      - name: Compute cache date
+        id: cachedate
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore pip cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: .cache/pip
+          key: "pip-${{ runner.os }}-pipaudit${{ env.PIP_AUDIT_VERSION }}-${{ hashFiles('requirements.txt') }}"
+          restore-keys: "pip-${{ runner.os }}-"
+
+      # Trivy's vulnerability DB is ~100 MB and refreshed every few hours;
+      # a daily key with a loose restore-key avoids re-downloading per run.
+      - name: Restore Trivy DB cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: .trivycache
+          key: "trivy-db-${{ steps.cachedate.outputs.day }}"
+          restore-keys: "trivy-db-"
+
+      # pip-audit resolves the full dependency tree, so it needs pip to be able
+      # to build metadata for psycopg2 - whose sdist requires pg_config. Hence
+      # libpq-dev. Swapping in psycopg2-binary would audit a package the
+      # application does not actually install.
+      - name: Run pip-audit
+        run: |
+          docker run --rm -v "${PWD}":/src -v "${PWD}/.cache/pip":/root/.cache/pip \
+            -w /src "${IMG_PYTHON}" sh -c '
+              set -e
+              apt-get -qq update >/dev/null
+              apt-get -qq install -y --no-install-recommends gcc libpq-dev python3-dev >/dev/null
+              pip install -q "pip-audit=='"${PIP_AUDIT_VERSION}"'"
+              set +e
+              pip-audit -r requirements.txt -f json \
+                -o '"${REPORT_DIR}"'/pip-audit.json --progress-spinner off
+              rc=$?
+              # pip-audit exits 1 when advisories exist; anything else is a
+              # scanner or resolver failure.
+              [ "$rc" -gt 1 ] && exit "$rc"
+              test -s '"${REPORT_DIR}"'/pip-audit.json
+            '
+
+      # Trivy in fs mode covers the lockfile and licences; it uses a different
+      # advisory source from pip-audit, which is the point of running both.
+      - name: Run Trivy filesystem scan
+        run: |
+          docker run --rm -v "${PWD}":/src -v "${PWD}/.trivycache":/root/.cache/trivy \
+            -w /src "${IMG_TRIVY}" \
+            fs --scanners vuln,license,secret \
+               --format json --output "${REPORT_DIR}/trivy-fs.json" \
+               --skip-dirs "${REPORT_DIR}" --skip-dirs .trivycache --skip-dirs .cache \
+               --exit-code 0 .
+          docker run --rm -v "${PWD}":/src -v "${PWD}/.trivycache":/root/.cache/trivy \
+            -w /src "${IMG_TRIVY}" \
+            fs --scanners vuln,license,secret \
+               --format sarif --output "${REPORT_DIR}/trivy-fs.sarif" \
+               --skip-dirs "${REPORT_DIR}" --skip-dirs .trivycache --skip-dirs .cache \
+               --exit-code 0 .
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}" .cache .trivycache
+
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-deps.json"
+
+      - name: Upload dependency-stage findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: findings-deps
+          path: |
+            ${{ env.REPORT_DIR }}/pip-audit.json
+            ${{ env.REPORT_DIR }}/trivy-fs.json
+            ${{ env.REPORT_DIR }}/trivy-fs.sarif
+            ${{ env.REPORT_DIR }}/normalized-deps.json
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Stage 3 - Build and package
+  # ---------------------------------------------------------------------------
+  # Stage 3 - Build and package
+  #
+  # Two image scanners on purpose (Trivy + Docker Scout) - see docs/PIPELINE.md.
+  # Publishing, signing and attestation happen only on a push to main: a pull
+  # request must never be able to put a signed artefact in the registry, and a
+  # fork's GITHUB_TOKEN is read-only anyway.
+  # ---------------------------------------------------------------------------
+  build-and-package:
+    name: "Stage 3 - Build and package"
+    needs: [code-scan, dependency-scan]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # push to GHCR
+      id-token: write   # Sigstore keyless OIDC - this job only, nowhere else
+    env:
+      # `secrets` is not a valid context inside `if:`, so the availability of the
+      # optional Docker Hub credentials is hoisted into a job-level env var.
+      HAS_DOCKERHUB: "${{ secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' }}"
+      PUBLISH: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}"
+      IMAGE_REF: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}" sbom .trivycache
+
+      # --- Dockerfile linting -------------------------------------------------
+      # Runs before the build: a Dockerfile defect is cheaper to catch than a
+      # 4 GB image is to produce.
+      - name: Run Hadolint
+        run: |
+          docker run --rm -i "${IMG_HADOLINT}" hadolint --no-color \
+            --format sarif - < Dockerfile > "${REPORT_DIR}/hadolint.sarif" || true
+          docker run --rm -i "${IMG_HADOLINT}" hadolint --no-color \
+            --format json - < Dockerfile > "${REPORT_DIR}/hadolint.json" || true
+          test -s "${REPORT_DIR}/hadolint.sarif" || {
+            echo "::error title=Hadolint::produced no SARIF - scanner error"; exit 2; }
+          docker run --rm -i "${IMG_HADOLINT}" hadolint --no-color - < Dockerfile || true
+
+      - name: Compute cache date
+        id: cachedate
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Trivy DB cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: .trivycache
+          key: "trivy-db-${{ steps.cachedate.outputs.day }}"
+          restore-keys: "trivy-db-"
+
+      # --- Build --------------------------------------------------------------
+      # Tagged with the commit SHA, never `latest`, so every artefact traces to
+      # exactly one commit and the OPA policy banning mutable tags holds.
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile -t "${IMAGE_REF}" .
+          docker image inspect "${IMAGE_REF}" --format 'built {{.Id}} ({{.Size}} bytes)'
+          docker image inspect "${IMAGE_REF}" --format '{{.Id}}' > image.id
+
+      # Stage 5 must test the artefact this job produced, not a rebuild of it.
+      # Docker builds are not bit-reproducible, so a second `docker build` in
+      # another job yields a different image ID, and scanning something that is
+      # never shipped is the same mistake as signing a mutable tag. An artifact
+      # is the only channel between jobs; at ~360 MB gzipped it costs about what
+      # the rebuild would, and it buys byte-for-byte identity.
+      - name: Export the image for the DAST stage
+        run: |
+          docker save "${IMAGE_REF}" | gzip -1 > image.tar.gz
+          ls -l image.tar.gz
+
+      - name: Hand the image to Stage 5
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: image
+          path: |
+            image.tar.gz
+            image.id
+          if-no-files-found: error
+          # Already gzipped; a second pass would spend a minute to save nothing.
+          compression-level: 0
+          # An intermediate, not evidence. The SBOM and the findings are what is
+          # worth keeping.
+          retention-days: 1
+
+      # --- Image scanning -----------------------------------------------------
+      - name: Run Trivy image scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}/.trivycache":/root/.cache/trivy \
+            -v "${PWD}/${REPORT_DIR}":/out \
+            "${IMG_TRIVY}" image --scanners vuln,secret \
+              --format json --output /out/trivy-image.json \
+              --exit-code 0 "${IMAGE_REF}"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}/.trivycache":/root/.cache/trivy \
+            -v "${PWD}/${REPORT_DIR}":/out \
+            "${IMG_TRIVY}" image --scanners vuln,secret \
+              --format sarif --output /out/trivy-image.sarif \
+              --exit-code 0 "${IMAGE_REF}"
+
+      # Docker Scout resolves CVEs against Docker's advisory database, which
+      # requires a Docker Hub account - GITHUB_TOKEN cannot authenticate it.
+      # Rather than commit a broken step or a long-lived secret requirement,
+      # Scout is optional and Trivy is the mandatory image scanner.
+      - name: Docker Scout scan
+        if: env.HAS_DOCKERHUB == 'true'
+        uses: docker/scout-action@2688993af7bafd6ba8c6a74ec652442be91dd82b  # v1.23.1
+        with:
+          dockerhub-user: "${{ secrets.DOCKERHUB_USER }}"
+          dockerhub-password: "${{ secrets.DOCKERHUB_TOKEN }}"
+          image: "${{ env.IMAGE_REF }}"
+          command: quickview,cves
+          only-severities: critical,high
+          sarif-file: "${{ env.REPORT_DIR }}/scout-report.sarif"
+          exit-code: false
+
+      - name: Note skipped Scout scan
+        if: env.HAS_DOCKERHUB != 'true'
+        run: |
+          echo "::notice title=Docker Scout::skipped - DOCKERHUB_USER/DOCKERHUB_TOKEN not configured"
+
+      # --- SBOM ---------------------------------------------------------------
+      # Both formats on purpose: CycloneDX is what most vulnerability tooling
+      # consumes, SPDX is what licence and procurement tooling expects.
+      - name: Generate SBOM (CycloneDX + SPDX)
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}/sbom":/out \
+            "${IMG_SYFT}" "${IMAGE_REF}" \
+              -o "cyclonedx-json=/out/sbom.cdx.json" \
+              -o "spdx-json=/out/sbom.spdx.json"
+          for f in sbom/sbom.cdx.json sbom/sbom.spdx.json; do
+            test -s "$f" || { echo "::error title=Syft::$f is empty"; exit 2; }
+          done
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}" sbom .trivycache
+
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-build.json"
+
+      - name: Upload build-stage findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: findings-build
+          path: |
+            ${{ env.REPORT_DIR }}/hadolint.json
+            ${{ env.REPORT_DIR }}/hadolint.sarif
+            ${{ env.REPORT_DIR }}/trivy-image.json
+            ${{ env.REPORT_DIR }}/trivy-image.sarif
+            ${{ env.REPORT_DIR }}/scout-report.sarif
+            ${{ env.REPORT_DIR }}/normalized-build.json
+          if-no-files-found: warn
+
+      # The SBOM is an artefact in its own right, not a finding report - it is
+      # what someone answering "are we affected by this new CVE?" reaches for.
+      - name: Attach SBOM to the workflow run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: sbom
+          path: |
+            sbom/sbom.cdx.json
+            sbom/sbom.spdx.json
+          if-no-files-found: error
+          retention-days: 90
+
+      # --- Publish, sign, attest (main only) ----------------------------------
+      # GITHUB_TOKEN only. No registry password exists anywhere in this pipeline.
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Push image to GHCR
+        id: push
+        if: env.PUBLISH == 'true'
+        run: |
+          docker push "${IMAGE_REF}"
+          # Sign and attest by digest, not by tag: a tag is mutable, so signing
+          # one leaves a window where the signature covers different bytes.
+          digest="$(docker image inspect "${IMAGE_REF}" \
+            --format '{{index .RepoDigests 0}}' | cut -d@ -f2)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "pushed ${IMAGE_REF} @ ${digest}"
+
+      # Keyless signing: the identity is this workflow, proven by the OIDC token
+      # GitHub mints for the job. No private key exists to be stolen, which is
+      # why id-token: write is scoped to this job alone.
+      #
+      # Registry credentials are passed to cosign explicitly rather than through
+      # a mounted ~/.docker/config.json: the cosign image runs as uid 65532 with
+      # no HOME set, so it never reads the mounted file, authenticates
+      # anonymously and GHCR answers UNAUTHORIZED. The token is the same
+      # job-scoped GITHUB_TOKEN the docker login above uses, held in an env var
+      # so the step's script does not print it.
+      - name: Sign image with Cosign (keyless)
+        if: env.PUBLISH == 'true'
+        env:
+          DIGEST: "${{ steps.push.outputs.digest }}"
+          GHCR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          docker run --rm \
+            -e COSIGN_YES=true \
+            -e ACTIONS_ID_TOKEN_REQUEST_URL \
+            -e ACTIONS_ID_TOKEN_REQUEST_TOKEN \
+            "${IMG_COSIGN}" sign \
+              --registry-username "${GITHUB_ACTOR}" \
+              --registry-password "${GHCR_TOKEN}" \
+              "ghcr.io/${GITHUB_REPOSITORY}@${DIGEST}"
+
+      - name: Attest SBOM with Cosign
+        if: env.PUBLISH == 'true'
+        env:
+          DIGEST: "${{ steps.push.outputs.digest }}"
+          GHCR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          docker run --rm \
+            -e COSIGN_YES=true \
+            -e ACTIONS_ID_TOKEN_REQUEST_URL \
+            -e ACTIONS_ID_TOKEN_REQUEST_TOKEN \
+            -v "${PWD}/sbom":/sbom:ro \
+            "${IMG_COSIGN}" attest \
+              --predicate /sbom/sbom.cdx.json \
+              --type cyclonedx \
+              --registry-username "${GITHUB_ACTOR}" \
+              --registry-password "${GHCR_TOKEN}" \
+              "ghcr.io/${GITHUB_REPOSITORY}@${DIGEST}"
+
+      # Verifying our own signature immediately is the only way to know the
+      # signing step actually worked rather than merely exiting zero.
+      - name: Verify signature
+        if: env.PUBLISH == 'true'
+        env:
+          DIGEST: "${{ steps.push.outputs.digest }}"
+          GHCR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          docker run --rm \
+            "${IMG_COSIGN}" verify \
+              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              --registry-username "${GITHUB_ACTOR}" \
+              --registry-password "${GHCR_TOKEN}" \
+              "ghcr.io/${GITHUB_REPOSITORY}@${DIGEST}"
+
+  # ---------------------------------------------------------------------------
+  # Stage 4 - Provision
+  #
+  # Infrastructure as code: the Kubernetes manifests and the Terraform module.
+  # Three scanners with genuinely different jobs rather than three that overlap:
+  # Checkov and Trivy config bring large third-party rule sets, while Conftest
+  # enforces policy/kubernetes.rego - the handful of controls this repository
+  # will not ship without, which a generic scanner can only report as advice.
+  #
+  # Independent of the build, so it does not wait on Stage 3; it needs only the
+  # code stages to have passed.
+  # ---------------------------------------------------------------------------
+  provision-scan:
+    name: "Stage 4 - Provision"
+    needs: [code-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}" .trivycache
+
+      # deploy/k8s/20-configmap-settings.yaml is generated from the settings
+      # overlay that Stage 5 bind-mounts, because Kubernetes cannot mount a file
+      # out of the repository. Two copies of security-relevant configuration
+      # drift, and the drift would be silent: DAST would keep passing against
+      # settings that are no longer the ones deployed.
+      - name: Verify the settings ConfigMap matches deploy/overlay
+        run: python3 deploy/overlay/render-configmap.py --check
+
+      - name: Compute cache date
+        id: cachedate
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Trivy DB cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        with:
+          path: .trivycache
+          key: "trivy-db-${{ steps.cachedate.outputs.date }}"
+          restore-keys: |
+            trivy-db-
+
+      # The Rego unit tests run before the policy is used to judge anything. A
+      # policy whose own tests fail has no business failing someone's build, and
+      # these tests have already caught rules that silently matched nothing.
+      - name: Verify OPA policy unit tests
+        run: |
+          docker run --rm -v "${PWD}":/project -w /project \
+            "${IMG_CONFTEST}" verify --policy policy
+
+      - name: Run Checkov (Kubernetes + Terraform)
+        run: |
+          set +e
+          docker run --rm -v "${PWD}":/src -w /src --entrypoint checkov \
+            "${IMG_CHECKOV}" \
+            --directory deploy --framework kubernetes terraform \
+            --output json --quiet --compact > "${REPORT_DIR}/checkov.json"
+          rc=$?
+          # Checkov exits 1 when it finds something. Findings are the gate's
+          # business; only a real crash fails this step.
+          if [ "$rc" -gt 1 ]; then
+            echo "::error title=Checkov::scanner error (exit $rc)"
+            exit 2
+          fi
+          test -s "${REPORT_DIR}/checkov.json" \
+            || { echo "::error title=Checkov::report is empty"; exit 2; }
+
+      - name: Run Trivy config scan
+        run: |
+          docker run --rm -v "${PWD}":/src \
+            -v "${PWD}/.trivycache":/root/.cache/trivy -w /src \
+            "${IMG_TRIVY}" config deploy \
+              --config-data policy/trivy-data \
+              --format json --output "${REPORT_DIR}/trivy-config.json" --exit-code 0
+          docker run --rm -v "${PWD}":/src \
+            -v "${PWD}/.trivycache":/root/.cache/trivy -w /src \
+            "${IMG_TRIVY}" config deploy \
+              --config-data policy/trivy-data \
+              --format sarif --output "${REPORT_DIR}/trivy-config.sarif" --exit-code 0
+
+      - name: Run Conftest against the Kubernetes manifests
+        run: |
+          docker run --rm -v "${PWD}":/project -w /project \
+            "${IMG_CONFTEST}" test --policy policy --output json deploy/k8s \
+            > "${REPORT_DIR}/conftest.json" || true
+          test -s "${REPORT_DIR}/conftest.json" \
+            || { echo "::error title=Conftest::report is empty"; exit 2; }
+
+      # fmt, validate and plan. AWS_PROFILE and AWS_REGION are emptied so the
+      # provider cannot reach an account even if the runner had credentials. The
+      # two key variables carry obvious mock values rather than being emptied,
+      # because the provider requires the fields even with every credential call
+      # skipped - see deploy/terraform/provider.tf for why they are not in the
+      # .tf file. There is no `apply` here and there is not meant to be one.
+      - name: Terraform fmt, validate and plan
+        run: |
+          run_tf() {
+            docker run --rm -v "${PWD}/deploy/terraform":/tf -w /tf \
+              -e AWS_ACCESS_KEY_ID=mock-access-key-not-a-credential \
+              -e AWS_SECRET_ACCESS_KEY=mock-secret-key-not-a-credential \
+              -e AWS_PROFILE= -e AWS_REGION= \
+              "${IMG_TERRAFORM}" "$@"
+          }
+          run_tf init -input=false -no-color
+          run_tf fmt -check -recursive -no-color
+          run_tf validate -no-color
+          run_tf plan -input=false -no-color -lock=false
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}" .trivycache deploy
+
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-provision.json"
+
+      - name: Upload provision-stage findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: findings-provision
+          path: |
+            ${{ env.REPORT_DIR }}/checkov.json
+            ${{ env.REPORT_DIR }}/trivy-config.json
+            ${{ env.REPORT_DIR }}/trivy-config.sarif
+            ${{ env.REPORT_DIR }}/conftest.json
+            ${{ env.REPORT_DIR }}/normalized-provision.json
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Stage 5 - Deploy and DAST
+  #
+  # The first stage that runs the application instead of reading it. Everything
+  # before this point is a scanner's opinion about code it never executed; ZAP
+  # talks to a live PyGoat over HTTP and reports what the server actually did.
+  #
+  # It also exercises deploy/. The application is brought up under the same
+  # constraints as deploy/k8s/30-deployment.yaml - read-only root filesystem,
+  # UID 10001, all capabilities dropped, and the same settings overlay the
+  # ConfigMap is rendered from - so a hardening change that stops PyGoat serving
+  # traffic fails here, on a pull request, rather than in a cluster. Both
+  # blockers found while writing Stage 4 (app.log at import time, ALLOWED_HOSTS
+  # rejecting probes) are exactly the class of defect this catches.
+  # ---------------------------------------------------------------------------
+  dast:
+    name: "Stage 5 - Deploy and DAST"
+    needs: [build-and-package]
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REF: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
+      DAST_STATE: "${{ github.workspace }}/reports/.dast"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Create working directories
+        run: mkdir -p "${REPORT_DIR}"
+
+      # Not a rebuild: see the export step in Stage 3 for why the exact bytes
+      # matter here.
+      - name: Download the image built by Stage 3
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: image
+
+      - name: Load the image and confirm it is the one Stage 3 built
+        run: |
+          gunzip -c image.tar.gz | docker load
+          loaded="$(docker image inspect "${IMAGE_REF}" --format '{{.Id}}')"
+          expected="$(cat image.id)"
+          if [ "${loaded}" != "${expected}" ]; then
+            echo "::error title=DAST::loaded ${loaded}, Stage 3 built ${expected}"
+            exit 2
+          fi
+          echo "scanning ${expected}"
+
+      # `make dast-up` rather than an inline `docker compose`, so the local flow
+      # and CI bring the application up the same way. IMAGE_LOCAL is overridden
+      # on the command line because CI scans the image it was handed, not one
+      # tagged from the local checkout.
+      - name: Deploy PyGoat under the production hardening constraints
+        run: make dast-up IMAGE_LOCAL="${IMAGE_REF}"
+
+      # Digest-pinned container in a `run:` step, like every other scanner here.
+      # Exit 0 (nothing tripped), 1 (a FAIL rule fired) and 2 (warnings) all mean
+      # ZAP ran and found things, which is the security-gate job's business.
+      # Only 3 and above means ZAP failed to run.
+      - name: Run ZAP baseline scan
+        run: |
+          set +e
+          docker run --rm --network pygoat-dast \
+            -v "${DAST_STATE}":/zap/wrk:rw \
+            -v "${PWD}/.security/zap":/zap/conf:ro \
+            "${IMG_ZAP}" zap-baseline.py -t http://web:8000 \
+              -m 2 -c /zap/conf/rules.tsv -J zap.json -r zap.html -I
+          rc=$?
+          set -e
+          if [ "${rc}" -gt 2 ]; then
+            echo "::error title=ZAP::scanner error (exit ${rc})"; exit 2
+          fi
+          test -s "${DAST_STATE}/zap.json" || {
+            echo "::error title=ZAP::produced no report - scanner error"; exit 2; }
+          cp "${DAST_STATE}/zap.json" "${DAST_STATE}/zap.html" "${REPORT_DIR}/"
+
+      # Before the teardown, not after: these logs are what someone reads when
+      # the deployment is the thing that failed, and `docker compose down`
+      # deletes the containers that hold them.
+      - name: Collect deployment logs
+        if: always()
+        run: |
+          make dast-logs IMAGE_LOCAL="${IMAGE_REF}" > "${REPORT_DIR}/dast.log"
+          tail -40 "${REPORT_DIR}/dast.log"
+
+      # always(): the deployment must come down even when ZAP failed, the job was
+      # cancelled, or the app never became healthy.
+      - name: Tear down the deployment
+        if: always()
+        run: make dast-down IMAGE_LOCAL="${IMAGE_REF}"
+
+      - name: Normalize file ownership
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "${REPORT_DIR}"
+
+      - name: Normalize findings
+        if: always()
+        run: |
+          python3 .security/gate.py collect --reports "${REPORT_DIR}" \
+            --out "${REPORT_DIR}/normalized-dast.json"
+
+      - name: Upload DAST findings
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        if: always()
+        with:
+          name: findings-dast
+          path: |
+            ${{ env.REPORT_DIR }}/zap.json
+            ${{ env.REPORT_DIR }}/zap.html
+            ${{ env.REPORT_DIR }}/dast.log
+            ${{ env.REPORT_DIR }}/normalized-dast.json
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Security gate
+  #
+  # The one place that decides whether a finding fails the build. Every scanner
+  # above exits 0 on findings and non-zero only on scanner errors, so without
+  # this job the pipeline reports nothing about severity at all.
+  #
+  # It consumes the normalized findings each stage uploaded - never re-runs a
+  # scanner - and compares them against .security/baseline/. A finding that is
+  # already accepted there is silent; anything new at or above the scanner's
+  # blocking severity fails the job. See .security/POLICY.md.
+  #
+  # if: always() so a failed stage still gets a verdict instead of a skipped
+  # gate, and the completeness check below refuses to report a pass when a stage
+  # did not finish: a gate that goes green because a scanner never ran is worse
+  # than no gate at all.
+  # ---------------------------------------------------------------------------
+  security-gate:
+    name: "Security gate"
+    needs: [code-scan, dependency-scan, build-and-package, provision-scan, dast]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      # merge-multiple, not one download per stage: every stage names its files
+      # distinctly (normalized-code, normalized-deps, ...), so one flat directory
+      # is exactly what `gate.py collect` expects. The unredacted gitleaks report
+      # is not in any artifact and so cannot arrive here.
+      - name: Download every stage's findings
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: findings-*
+          merge-multiple: true
+          path: "${{ env.REPORT_DIR }}"
+
+      - name: List the reports that arrived
+        run: ls -l "${REPORT_DIR}"
+
+      # Recorded, not fatal, so the gate still prints its table for whatever did
+      # arrive - that table is how someone debugging a failed stage sees which
+      # scanners are missing. The job is failed at the end instead.
+      - name: Check every scanning stage completed
+        id: completeness
+        env:
+          NEEDS: "${{ toJSON(needs) }}"
+        run: |
+          incomplete=0
+          while read -r job result; do
+            printf '  %-20s %s\n' "${job}" "${result}"
+            if [ "${result}" != "success" ]; then
+              echo "::error title=Security gate::stage ${job} did not succeed" \
+                   "(${result}) - its findings are missing or partial"
+              incomplete=1
+            fi
+          done < <(jq -r 'to_entries[] | "\(.key) \(.value.result)"' <<< "${NEEDS}")
+          echo "incomplete=${incomplete}" >> "$GITHUB_OUTPUT"
+          if [ "${incomplete}" = 1 ]; then
+            {
+              echo "## Security gate — incomplete"
+              echo
+              echo "A scanning stage did not complete, so the findings below are"
+              echo "partial. The gate cannot pass on partial coverage."
+              echo
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # gate.py writes its markdown table to $GITHUB_STEP_SUMMARY itself and
+      # emits ::error annotations for each blocking finding. Exit 1 = blocking
+      # findings, exit 2 = no reports found at all (which it also refuses to
+      # treat as a pass).
+      - name: Evaluate findings against the baseline
+        run: python3 .security/gate.py gate --reports "${REPORT_DIR}"
+
+      - name: Fail on incomplete scan coverage
+        if: steps.completeness.outputs.incomplete == '1'
+        run: |
+          echo "::error title=Security gate::refusing to pass - see the stage" \
+               "results above"
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Code scanning upload
+  #
+  # Publishes each scanner's SARIF to GitHub code scanning, so findings are
+  # reviewable in the Security tab and annotated on the pull request diff rather
+  # than only inside a workflow log.
+  #
+  # Separate from security-gate on purpose: publishing evidence is not gating.
+  # The gate failing must not suppress the alerts that explain why, and an
+  # upload failing must not turn a clean gate red.
+  #
+  # Each file gets a distinct `category`. Code scanning keys a tool's alert set
+  # by (tool, category), so two uploads sharing one category make the second
+  # look like the first with everything fixed - silently closing real alerts.
+  # Trivy runs three times here and would collide without it.
+  #
+  # ZAP is absent: zap-baseline.py emits JSON (-J) and HTML (-r) only. Its
+  # findings are gated and kept as run artifacts instead - see docs/PIPELINE.md.
+  # ---------------------------------------------------------------------------
+  code-scanning:
+    name: "Code scanning upload"
+    needs: [code-scan, dependency-scan, build-and-package, provision-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF - this job only
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Download every stage's findings
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: findings-*
+          merge-multiple: true
+          path: "${{ env.REPORT_DIR }}"
+
+      # hashFiles on each step rather than one upload of the whole directory:
+      # the action takes a single category per call, and a stage that failed
+      # leaves its SARIF missing - which must skip, not fail the upload.
+      - name: Upload Bandit SARIF
+        if: hashFiles(format('{0}/bandit.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/bandit.sarif"
+          category: bandit
+
+      - name: Upload Semgrep SARIF
+        if: hashFiles(format('{0}/semgrep.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/semgrep.sarif"
+          category: semgrep
+
+      # The redacted SARIF, which is the only gitleaks report that leaves the
+      # runner. The unredacted JSON stays in the code stage.
+      - name: Upload Gitleaks SARIF
+        if: hashFiles(format('{0}/gitleaks.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/gitleaks.sarif"
+          category: gitleaks
+
+      - name: Upload Trivy filesystem SARIF
+        if: hashFiles(format('{0}/trivy-fs.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/trivy-fs.sarif"
+          category: trivy-fs
+
+      - name: Upload Hadolint SARIF
+        if: hashFiles(format('{0}/hadolint.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/hadolint.sarif"
+          category: hadolint
+
+      - name: Upload Trivy image SARIF
+        if: hashFiles(format('{0}/trivy-image.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/trivy-image.sarif"
+          category: trivy-image
+
+      # Only exists when the optional Docker Hub credentials are configured.
+      - name: Upload Docker Scout SARIF
+        if: hashFiles(format('{0}/scout-report.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/scout-report.sarif"
+          category: docker-scout
+
+      - name: Upload Trivy config SARIF
+        if: hashFiles(format('{0}/trivy-config.sarif', env.REPORT_DIR)) != ''
+        uses: github/codeql-action/upload-sarif@18420e3271f74589575af831a523c833acda327f  # codeql-bundle-v2.26.2
+        with:
+          sarif_file: "${{ env.REPORT_DIR }}/trivy-config.sarif"
+          category: trivy-config
+
+  # ---------------------------------------------------------------------------
+  # Triage - DefectDojo
+  #
+  # Code scanning shows a finding next to the line that caused it; DefectDojo is
+  # where the same findings get grouped, assigned and risk-accepted over time.
+  # This job pushes to a *hosted* instance when one is configured. The local
+  # stack in deploy/compose/docker-compose.defectdojo.yml is never brought up in
+  # CI - see .security/defectdojo.py for why the import goes through the
+  # normalized findings rather than eleven native parsers.
+  #
+  # Optional, like Docker Scout: without the secrets it prints a notice and does
+  # nothing. It is deliberately NOT a required status check - a triage system
+  # being unreachable must not be able to block a merge - but it does fail
+  # visibly when it is configured and broken, rather than passing quietly.
+  # See docs/BRANCH-PROTECTION.md.
+  # ---------------------------------------------------------------------------
+  defectdojo-import:
+    name: "Triage - DefectDojo import"
+    needs: [code-scan, dependency-scan, build-and-package, provision-scan, dast]
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      # `secrets` is not a valid context in `if:`, so availability is hoisted
+      # into a job-level env var - the HAS_DOCKERHUB pattern from Stage 3.
+      HAS_DEFECTDOJO: "${{ secrets.DEFECTDOJO_URL != '' && secrets.DEFECTDOJO_TOKEN != '' }}"
+    steps:
+      - name: Note skipped import
+        if: env.HAS_DEFECTDOJO != 'true'
+        run: |
+          echo "::notice title=DefectDojo::skipped - DEFECTDOJO_URL/DEFECTDOJO_TOKEN not configured"
+
+      - name: Checkout code
+        if: env.HAS_DEFECTDOJO == 'true'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+
+      - name: Download every stage's findings
+        if: env.HAS_DEFECTDOJO == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          pattern: findings-*
+          merge-multiple: true
+          path: "${{ env.REPORT_DIR }}"
+
+      # One engagement per branch, so a pull request's findings are never read as
+      # main's. The token needs write access to that product only.
+      - name: Import findings into DefectDojo
+        if: env.HAS_DEFECTDOJO == 'true'
+        env:
+          DEFECTDOJO_URL: "${{ secrets.DEFECTDOJO_URL }}"
+          DEFECTDOJO_TOKEN: "${{ secrets.DEFECTDOJO_TOKEN }}"
+        run: |
+          python3 .security/defectdojo.py push \
+            --reports "${REPORT_DIR}" \
+            --engagement "${GITHUB_REF_NAME}"

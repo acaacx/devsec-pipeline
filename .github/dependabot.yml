@@ -1,0 +1,66 @@
+---
+# Dependabot keeps the three supply chains that feed this pipeline moving:
+# Python packages, the container base image, and the GitHub Actions themselves.
+#
+# Note the deliberate tension: PyGoat's vulnerable pins are *intentional*, so
+# most pip PRs will be closed rather than merged. They are still valuable - each
+# one is a dated, reviewable record that we knew about the advisory and chose to
+# accept it, which is exactly what .security/baseline/ claims in prose.
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 10
+    labels: [dependencies, python, security]
+    commit-message:
+      prefix: "deps"
+      include: scope
+    # Wait before proposing a freshly published version. A compromised
+    # maintainer account publishing a malicious release is a real attack path,
+    # and without a cooldown Dependabot would open that PR within the hour.
+    # Security updates are a separate mechanism and are not delayed by this.
+    cooldown:
+      default-days: 7
+    # Security updates always come through; version churn on the deliberately
+    # pinned lab dependencies would otherwise bury them.
+    groups:
+      python-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker, security]
+    commit-message:
+      prefix: "deps(docker)"
+    cooldown:
+      default-days: 7
+
+  # Actions are pinned to commit SHAs, which Dependabot understands and bumps
+  # while keeping the trailing version comment accurate. Without this, SHA
+  # pinning silently rots.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels: [dependencies, github-actions, security]
+    commit-message:
+      prefix: "deps(actions)"
+    cooldown:
+      default-days: 7
