@@ -71,7 +71,7 @@ jobs:
         run: mkdir -p "${REPORT_DIR}" .cache/pip
 
       - name: Restore pip cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .cache/pip
           key: "pip-${{ runner.os }}-bandit${{ env.BANDIT_VERSION }}-${{ hashFiles('requirements.txt') }}"
@@ -191,7 +191,7 @@ jobs:
         run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Restore pip cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .cache/pip
           key: "pip-${{ runner.os }}-pipaudit${{ env.PIP_AUDIT_VERSION }}-${{ hashFiles('requirements.txt') }}"
@@ -200,7 +200,7 @@ jobs:
       # Trivy's vulnerability DB is ~100 MB and refreshed every few hours;
       # a daily key with a loose restore-key avoids re-downloading per run.
       - name: Restore Trivy DB cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .trivycache
           key: "trivy-db-${{ steps.cachedate.outputs.day }}"
@@ -316,7 +316,7 @@ jobs:
         run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Restore Trivy DB cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .trivycache
           key: "trivy-db-${{ steps.cachedate.outputs.day }}"
@@ -562,7 +562,7 @@ jobs:
         run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Restore Trivy DB cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .trivycache
           key: "trivy-db-${{ steps.cachedate.outputs.date }}"
