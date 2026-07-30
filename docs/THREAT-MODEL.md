@@ -225,7 +225,7 @@ emptied so it cannot reach an account even if the runner had them.
 
 The publish path is no longer on that list. It was, while `PUBLISH` had never
 been true — signing and the GHCR push are unreachable from a `pull_request` by
-design, so nothing could exercise them before the first merge. That merge
+design, so nothing could exercise them before the first push to `main`. That push
 exercised them and found a real defect: the Cosign steps mounted the runner's
 `~/.docker/config.json` into an image that runs as uid 65532 with no `HOME`, so
 cosign never read it, authenticated anonymously and GHCR rejected the signature
