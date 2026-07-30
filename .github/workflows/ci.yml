@@ -690,7 +690,7 @@ jobs:
       # Not a rebuild: see the export step in Stage 3 for why the exact bytes
       # matter here.
       - name: Download the image built by Stage 3
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: image
 
@@ -801,7 +801,7 @@ jobs:
       # is exactly what `gate.py collect` expects. The unredacted gitleaks report
       # is not in any artifact and so cannot arrive here.
       - name: Download every stage's findings
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: findings-*
           merge-multiple: true
@@ -884,7 +884,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
 
       - name: Download every stage's findings
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: findings-*
           merge-multiple: true
@@ -989,7 +989,7 @@ jobs:
 
       - name: Download every stage's findings
         if: env.HAS_DEFECTDOJO == 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: findings-*
           merge-multiple: true
