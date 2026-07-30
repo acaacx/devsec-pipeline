@@ -158,7 +158,7 @@ jobs:
             --out "${REPORT_DIR}/normalized-code.json"
 
       - name: Upload code-stage findings
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: findings-code
@@ -256,7 +256,7 @@ jobs:
             --out "${REPORT_DIR}/normalized-deps.json"
 
       - name: Upload dependency-stage findings
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: findings-deps
@@ -343,7 +343,7 @@ jobs:
           ls -l image.tar.gz
 
       - name: Hand the image to Stage 5
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: image
           path: |
@@ -421,7 +421,7 @@ jobs:
             --out "${REPORT_DIR}/normalized-build.json"
 
       - name: Upload build-stage findings
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: findings-build
@@ -437,7 +437,7 @@ jobs:
       # The SBOM is an artefact in its own right, not a finding report - it is
       # what someone answering "are we affected by this new CVE?" reaches for.
       - name: Attach SBOM to the workflow run
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: sbom
@@ -646,7 +646,7 @@ jobs:
             --out "${REPORT_DIR}/normalized-provision.json"
 
       - name: Upload provision-stage findings
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: findings-provision
@@ -759,7 +759,7 @@ jobs:
             --out "${REPORT_DIR}/normalized-dast.json"
 
       - name: Upload DAST findings
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: findings-dast
