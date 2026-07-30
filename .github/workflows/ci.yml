@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           # Gitleaks needs both sides of a PR to scan only the PR's commits.
           fetch-depth: 0
@@ -181,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Create working directories
         run: mkdir -p "${REPORT_DIR}" .cache/pip .trivycache
@@ -293,7 +293,7 @@ jobs:
       IMAGE_REF: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Create working directories
         run: mkdir -p "${REPORT_DIR}" sbom .trivycache
@@ -544,7 +544,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Create working directories
         run: mkdir -p "${REPORT_DIR}" .trivycache
@@ -682,7 +682,7 @@ jobs:
       DAST_STATE: "${{ github.workspace }}/reports/.dast"
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Create working directories
         run: mkdir -p "${REPORT_DIR}"
@@ -794,7 +794,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       # merge-multiple, not one download per stage: every stage names its files
       # distinctly (normalized-code, normalized-deps, ...), so one flat directory
@@ -881,7 +881,7 @@ jobs:
       security-events: write   # upload SARIF - this job only
     steps:
       - name: Checkout code
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Download every stage's findings
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
@@ -985,7 +985,7 @@ jobs:
 
       - name: Checkout code
         if: env.HAS_DEFECTDOJO == 'true'
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Download every stage's findings
         if: env.HAS_DEFECTDOJO == 'true'
